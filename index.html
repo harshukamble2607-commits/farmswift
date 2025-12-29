@@ -1,0 +1,2696 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmSwift - Farm Fresh, Swift Delivery!</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #10b981 #f3f4f6;
+    }
+    
+    .banner-slide {
+      animation: slideIn 0.5s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    }
+    
+    .pulse-btn {
+      animation: pulse-green 2s infinite;
+    }
+    
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    }
+    
+    .category-item:hover {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    }
+    
+    .add-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    .modal-overlay {
+      backdrop-filter: blur(4px);
+    }
+    
+    .status-badge {
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    .logo-text {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .loading-spinner {
+      border: 3px solid #f3f4f6;
+      border-top: 3px solid #10b981;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-50">
+  <div id="app" class="h-full overflow-auto"><!-- Loading State -->
+   <div id="loading-screen" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+    <div class="text-center">
+     <div class="text-6xl mb-4">
+      ⚡🥬
+     </div>
+     <div class="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+     <p class="text-gray-600 font-medium">Loading FarmSwift...</p>
+     <p class="text-xs text-gray-400 mt-2">Connecting to Google Sheets...</p>
+    </div>
+   </div><!-- Connection Error -->
+   <div id="connection-error" class="hidden fixed inset-0 bg-white z-50 flex items-center justify-center">
+    <div class="text-center p-8">
+     <div class="text-6xl mb-4">
+      ⚠️
+     </div>
+     <h2 class="text-xl font-bold text-gray-800 mb-2">Connection Issue</h2>
+     <p class="text-gray-600 mb-4">Unable to connect to Google Sheets database.</p><button onclick="location.reload()" class="bg-emerald-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-emerald-700 transition"> Try Again </button>
+    </div>
+   </div><!-- Main Customer View -->
+   <div id="customer-view" class="hidden"><!-- Sticky Header -->
+    <header class="sticky top-0 z-40 bg-white shadow-sm">
+     <div class="max-w-7xl mx-auto px-4 py-3">
+      <div class="flex items-center justify-between gap-4"><!-- Logo -->
+       <div class="flex items-center gap-2 min-w-fit cursor-pointer" onclick="showCustomerView()"><span class="text-2xl">⚡</span>
+        <div>
+         <h1 id="site-title" class="text-xl font-bold logo-text">FarmSwift</h1>
+         <p class="text-xs text-gray-500">Farm Fresh, Swift Delivery!</p>
+        </div>
+       </div><!-- Search Bar -->
+       <div class="flex-1 max-w-2xl">
+        <div class="relative"><input type="text" id="search-input" placeholder="Search for fresh vegetables, fruits, dairy..." class="w-full px-4 py-2.5 pl-11 bg-gray-100 rounded-xl border-2 border-transparent focus:border-emerald-500 focus:bg-white transition outline-none text-sm">
+         <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+         </svg>
+        </div>
+       </div><!-- Right Actions -->
+       <div class="flex items-center gap-3"><button id="login-btn" class="hidden md:flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition font-medium text-sm">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+         </svg> Login </button> <button id="cart-btn" class="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition font-medium text-sm">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+         </svg><span id="cart-count" class="bg-white text-emerald-600 px-2 py-0.5 rounded-full text-xs font-bold">0</span> <span id="cart-total" class="hidden md:inline">₹0</span> </button>
+       </div>
+      </div>
+     </div><!-- Category Navigation -->
+     <nav class="bg-white border-t">
+      <div class="max-w-7xl mx-auto px-4">
+       <div class="flex items-center gap-1 overflow-x-auto py-2 no-scrollbar"><button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit bg-emerald-100" data-category="all"> <span class="text-2xl mb-1">���</span> <span class="text-xs font-medium text-gray-700">All Items</span> </button> <button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit" data-category="vegetables"> <span class="text-2xl mb-1">🥬</span> <span class="text-xs font-medium text-gray-700">Vegetables</span> </button> <button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit" data-category="fruits"> <span class="text-2xl mb-1">🍎</span> <span class="text-xs font-medium text-gray-700">Fruits</span> </button> <button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit" data-category="dairy"> <span class="text-2xl mb-1">🥛</span> <span class="text-xs font-medium text-gray-700">Dairy</span> </button> <button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit" data-category="grains"> <span class="text-2xl mb-1">🌾</span> <span class="text-xs font-medium text-gray-700">Grains</span> </button> <button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit" data-category="spices"> <span class="text-2xl mb-1">🌶️</span> <span class="text-xs font-medium text-gray-700">Spices</span> </button> <button class="category-btn category-item flex flex-col items-center px-4 py-2 rounded-xl transition min-w-fit" data-category="organic"> <span class="text-2xl mb-1">🌿</span> <span class="text-xs font-medium text-gray-700">Organic</span> </button>
+        <div class="h-8 w-px bg-gray-200 mx-2"></div><button id="sell-product-btn" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 transition min-w-fit"> <span class="text-lg">������</span> <span class="text-xs font-semibold">Sell Your Product</span> </button> <button id="delivery-login-btn" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition min-w-fit"> <span class="text-lg">🚴</span> <span class="text-xs font-semibold">Delivery Partner</span> </button> <button id="darkstore-login-btn" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition min-w-fit"> <span class="text-lg">🏪</span> <span class="text-xs font-semibold">Dark Store</span> </button>
+       </div>
+      </div>
+     </nav>
+    </header><!-- Hero Banner -->
+    <section class="max-w-7xl mx-auto px-4 py-6">
+     <div id="hero-banner" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 h-48 md:h-64" style="background-size: cover; background-position: center;">
+      <div class="absolute inset-0 bg-gradient-to-r from-emerald-600/90 to-teal-500/80" id="hero-overlay"></div>
+      <div class="h-full flex items-center px-8 md:px-12 relative z-10">
+       <div class="text-white max-w-lg">
+        <p id="hero-badge-text" class="text-sm font-medium bg-white/20 inline-block px-3 py-1 rounded-full mb-3">⚡ Lightning Fast Delivery</p>
+        <h2 id="hero-text" class="text-2xl md:text-4xl font-bold mb-2">Farm Fresh, Swift Delivery!</h2>
+        <p id="hero-subtitle-text" class="text-emerald-100 mb-4">Get fresh produce delivered in 8 minutes</p>
+        <div class="flex items-center gap-2"><span id="hero-tag-text" class="bg-white/20 px-3 py-1 rounded-full text-sm">📊 Powered by Google Sheets</span>
+        </div>
+       </div>
+      </div>
+     </div>
+    </section><!-- Products Grid -->
+    <section class="max-w-7xl mx-auto px-4 py-6">
+     <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-gray-800">Fresh Products</h2>
+      <div class="flex items-center gap-3"><button id="refresh-btn" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"> <span id="refresh-icon">🔄</span> Refresh </button>
+       <p id="product-count" class="text-sm text-gray-500">Loading...</p>
+      </div>
+     </div>
+     <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"><!-- Products will be rendered here -->
+     </div>
+     <div id="products-loading" class="text-center py-16">
+      <div class="loading-spinner mx-auto mb-4"></div>
+      <p class="text-gray-500">Loading products from Google Sheets...</p>
+     </div>
+     <div id="no-products" class="hidden text-center py-16"><span class="text-6xl mb-4 block">🌱</span>
+      <h3 class="text-xl font-semibold text-gray-700 mb-2">No products available yet</h3>
+      <p class="text-gray-500">Add products to your Google Sheet!</p>
+     </div>
+    </section><!-- Features Section -->
+    <section class="bg-white mt-8">
+     <div class="max-w-7xl mx-auto px-4 py-12">
+      <div class="text-center mb-10">
+       <h2 class="text-2xl font-bold text-gray-800 mb-2">Why Choose FarmSwift?</h2>
+       <p class="text-gray-600">Connected to Google Sheets for easy data management!</p>
+      </div>
+      <div class="grid md:grid-cols-4 gap-6">
+       <div class="text-center p-6 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl">
+        <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><span class="text-3xl">⚡</span>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-2">8 Min Delivery</h3>
+        <p class="text-sm text-gray-600">Lightning-fast delivery</p>
+       </div>
+       <div class="text-center p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl">
+        <div class="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><span class="text-3xl">📊</span>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-2">Google Sheets</h3>
+        <p class="text-sm text-gray-600">Easy database management</p>
+       </div>
+       <div class="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl">
+        <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><span class="text-3xl">🚜</span>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-2">Direct from Farmers</h3>
+        <p class="text-sm text-gray-600">No middlemen</p>
+       </div>
+       <div class="text-center p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl">
+        <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><span class="text-3xl">✅</span>
+        </div>
+        <h3 class="font-semibold text-gray-800 mb-2">Quality Assured</h3>
+        <p class="text-sm text-gray-600">Fresh produce always</p>
+       </div>
+      </div>
+     </div>
+    </section><!-- About Section (moved to bottom) -->
+    <section id="about-section" class="max-w-7xl mx-auto px-4 py-8">
+     <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="grid md:grid-cols-2 gap-0">
+       <div id="about-image-container" class="h-64 md:h-auto bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center"><span class="text-8xl">🌾</span>
+       </div>
+       <div class="p-8">
+        <h2 id="about-section-title" class="text-2xl font-bold text-gray-800 mb-4">About FarmSwift</h2>
+        <p id="about-section-description" class="text-gray-600 mb-6 leading-relaxed">FarmSwift is your trusted partner for farm-fresh produce delivered straight to your doorstep. We connect local farmers directly with consumers, ensuring the freshest quality while supporting sustainable farming practices.</p>
+        <div class="grid grid-cols-2 gap-4">
+         <div class="bg-gradient-to-br from-emerald-50 to-teal-50 p-4 rounded-xl">
+          <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center mb-2"><span class="text-xl">🎯</span>
+          </div>
+          <h3 id="about-mission-title-display" class="font-semibold text-gray-800 mb-1">Our Mission</h3>
+          <p id="about-mission-text-display" class="text-sm text-gray-600">To deliver farm-fresh produce within minutes while supporting local farmers.</p>
+         </div>
+         <div class="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-xl">
+          <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center mb-2"><span class="text-xl">🌟</span>
+          </div>
+          <h3 id="about-vision-title-display" class="font-semibold text-gray-800 mb-1">Our Vision</h3>
+          <p id="about-vision-text-display" class="text-sm text-gray-600">To become the leading platform connecting farms and homes sustainably.</p>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </section><!-- Footer -->
+    <footer class="bg-gray-900 text-white py-10">
+     <div class="max-w-7xl mx-auto px-4">
+      <div class="grid md:grid-cols-4 gap-8 mb-8">
+       <div>
+        <div class="flex items-center gap-2 mb-4"><span class="text-2xl">⚡</span>
+         <h3 class="font-bold text-xl text-emerald-400">FarmSwift</h3>
+        </div>
+        <p class="text-sm text-gray-400">Farm fresh produce delivered in minutes. Powered by Google Sheets!</p>
+       </div>
+       <div>
+        <h4 class="font-semibold mb-3">Quick Links</h4>
+        <ul class="space-y-2 text-sm text-gray-400">
+         <li><a href="#" class="hover:text-emerald-400 transition">About Us</a></li>
+         <li><a href="#" class="hover:text-emerald-400 transition">Contact</a></li>
+        </ul>
+       </div>
+       <div>
+        <h4 class="font-semibold mb-3">Partner With Us</h4>
+        <ul class="space-y-2 text-sm text-gray-400">
+         <li><a href="#" class="hover:text-emerald-400 transition">Become a Farmer</a></li>
+         <li><a href="#" class="hover:text-emerald-400 transition">Delivery Partner</a></li>
+        </ul>
+       </div>
+       <div>
+        <h4 class="font-semibold mb-3">Contact Us</h4>
+        <p class="text-sm text-gray-400">support@farmswift.in</p>
+       </div>
+      </div>
+      <div class="border-t border-gray-800 pt-6 text-center text-sm text-gray-500">
+       © 2024 FarmSwift. Powered by Google Sheets ����������
+      </div>
+     </div>
+    </footer>
+   </div><!-- Cart Sidebar -->
+   <div id="cart-sidebar" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay" id="cart-overlay"></div>
+    <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl">
+     <div class="flex flex-col h-full">
+      <div class="flex items-center justify-between p-4 border-b">
+       <h2 class="text-lg font-bold text-gray-800">🛒 Your Cart</h2><button id="close-cart" class="p-2 hover:bg-gray-100 rounded-lg transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg></button>
+      </div>
+      <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+      <div id="cart-empty" class="hidden flex-1 flex items-center justify-center">
+       <div class="text-center"><span class="text-6xl mb-4 block">🛒</span>
+        <p class="text-gray-500">Your cart is empty</p>
+       </div>
+      </div>
+      <div id="cart-footer" class="border-t p-4 space-y-3">
+       <div class="flex justify-between text-lg font-bold"><span>Total</span> <span id="cart-total-sidebar">₹0</span>
+       </div><button id="checkout-btn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition pulse-btn flex items-center justify-center gap-2"> <span>Proceed to Checkout</span> <span>⚡</span> </button>
+      </div>
+     </div>
+    </div>
+   </div><!-- Address Modal -->
+   <div id="address-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90%] overflow-y-auto">
+     <div class="p-6">
+      <h2 class="text-xl font-bold text-gray-800 mb-6">📍 Delivery Address</h2>
+      <form id="address-form" class="space-y-4">
+       <div><label for="customer-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label> <input type="text" id="customer-name" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div>
+       <div><label for="customer-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label> <input type="tel" id="customer-phone" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div>
+       <div><label for="customer-address" class="block text-sm font-medium text-gray-700 mb-1">Full Address</label> <textarea id="customer-address" rows="3" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition resize-none"></textarea>
+       </div>
+       <div><label for="customer-landmark" class="block text-sm font-medium text-gray-700 mb-1">Landmark</label> <input type="text" id="customer-landmark" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div><button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> Continue to Payment → </button>
+      </form>
+     </div>
+    </div>
+   </div><!-- Payment Modal -->
+   <div id="payment-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90%] overflow-y-auto">
+     <div class="p-6">
+      <h2 class="text-xl font-bold text-gray-800 mb-6">💳 Payment</h2>
+      <div class="space-y-4">
+       <div class="border-2 border-emerald-500 rounded-xl p-4 bg-emerald-50">
+        <div class="flex items-center gap-3 mb-3"><input type="radio" name="payment" id="cod-payment" checked class="w-4 h-4 text-emerald-600"> <label for="cod-payment" class="font-medium text-gray-800">Cash on Delivery</label>
+        </div>
+       </div>
+       <div class="bg-gray-50 rounded-xl p-4">
+        <div class="flex justify-between mb-2"><span class="text-gray-600">Order Total</span> <span id="payment-total" class="font-bold text-gray-800">₹0</span>
+        </div>
+       </div><button id="place-order-btn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-2"> <span>Place Order</span> <span>⚡</span> </button>
+      </div>
+     </div>
+    </div>
+   </div><!-- Success Modal -->
+   <div id="success-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+     <div class="p-8 text-center">
+      <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6"><span class="text-5xl">✅</span>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">Order Placed! ⚡</h2>
+      <p class="text-gray-600 mb-4">Your order has been saved to Google Sheets!</p>
+      <p class="text-sm text-gray-500 mb-2">Order ID: <span id="success-order-id" class="font-mono font-bold text-emerald-600"></span></p>
+      <p class="text-sm text-gray-500 mb-4">Delivery ID: <span id="success-delivery-id" class="font-mono font-bold text-blue-600"></span></p>
+      <div id="success-payment-status" class="mb-4"></div><button id="close-success" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> Continue Shopping </button>
+     </div>
+    </div>
+   </div><!-- Login Modal -->
+   <div id="login-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay" id="login-overlay"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90%] overflow-y-auto">
+     <div class="p-6">
+      <div class="text-center mb-6"><span class="text-4xl">⚡</span>
+       <h2 class="text-xl font-bold text-gray-800 mt-2">Welcome to FarmSwift</h2>
+       <p class="text-sm text-gray-500">Powered by Google Sheets</p>
+      </div>
+      <form id="login-form" class="space-y-4">
+       <p id="login-user-type" class="text-sm text-emerald-600 font-medium text-center"></p>
+       <div><label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email / ID</label> <input type="text" id="login-email" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div>
+       <div><label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label> <input type="password" id="login-password" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div><button type="submit" id="login-submit-btn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> Login </button> <button type="button" id="register-toggle" class="w-full text-emerald-600 py-2 text-sm font-medium hover:underline"> New user? Register here </button> <button type="button" id="back-to-home" class="w-full text-gray-500 py-2 text-sm font-medium hover:underline"> ← Back to Home </button>
+      </form>
+      <form id="register-form" class="hidden space-y-4">
+       <p id="register-user-type" class="text-sm text-emerald-600 font-medium text-center"></p>
+       <div><label for="register-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label> <input type="text" id="register-name" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div>
+       <div><label for="register-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label> <input type="email" id="register-email" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div>
+       <div><label for="register-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label> <input type="tel" id="register-phone" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div>
+       <div><label for="register-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label> <input type="password" id="register-password" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+       </div><button type="submit" id="register-submit-btn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> Register </button> <button type="button" id="login-toggle" class="w-full text-emerald-600 py-2 text-sm font-medium hover:underline"> Already registered? Login </button>
+      </form>
+     </div>
+    </div>
+   </div><!-- Farmer Dashboard -->
+   <div id="farmer-dashboard" class="hidden min-h-full bg-gray-50">
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><span class="text-2xl">🌾</span>
+       <div>
+        <h1 class="font-bold text-gray-800">Farmer Dashboard</h1>
+        <p id="farmer-name-display" class="text-sm text-gray-500"></p>
+       </div>
+      </div>
+      <div class="flex items-center gap-3"><button id="farmer-refresh" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">🔄 Refresh</button> <button id="farmer-logout" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-medium text-sm"> Logout </button>
+      </div>
+     </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-6"><!-- Stats Cards -->
+     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center"><span class="text-xl">🥬</span>
+        </div>
+        <div>
+         <p id="farmer-stat-products" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Products</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><span class="text-xl">✅</span>
+        </div>
+        <div>
+         <p id="farmer-stat-approved" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Approved</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center"><span class="text-xl">⏳</span>
+        </div>
+        <div>
+         <p id="farmer-stat-pending" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Pending</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><span class="text-xl">💰</span>
+        </div>
+        <div>
+         <p id="farmer-stat-earnings" class="text-xl font-bold text-gray-800">₹0</p>
+         <p class="text-xs text-gray-500">Est. Earnings</p>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">Add New Product</h2>
+      <form id="add-product-form" class="space-y-4">
+       <div class="grid md:grid-cols-2 gap-4">
+        <div><label for="product-name" class="block text-sm font-medium text-gray-700 mb-1">Product Name</label> <input type="text" id="product-name" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+        </div>
+        <div><label for="product-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label> <select id="product-category" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"> <option value="">Select category</option> <option value="vegetables">Vegetables</option> <option value="fruits">Fruits</option> <option value="dairy">Dairy</option> <option value="grains">Grains</option> <option value="spices">Spices</option> <option value="organic">Organic</option> </select>
+        </div>
+        <div><label for="product-price" class="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label> <input type="number" id="product-price" required min="1" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+        </div>
+        <div><label for="product-quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity (e.g., 500g, 1kg)</label> <input type="text" id="product-quantity" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+        </div>
+        <div><label for="product-image" class="block text-sm font-medium text-gray-700 mb-1">Product Photo</label>
+         <div class="flex items-center gap-3"><label class="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition"> <span class="text-2xl">📷</span> <span class="text-sm text-gray-600">Click to upload photo</span> <input type="file" id="product-image" accept="image/*" class="hidden" onchange="previewFarmerImage(this)"> </label>
+          <div id="farmer-image-preview" class="hidden w-16 h-16 rounded-xl overflow-hidden bg-gray-100 border-2 border-emerald-500 flex-shrink-0"><img id="farmer-preview-img" src="" alt="Preview" class="w-full h-full object-cover">
+          </div>
+         </div><input type="hidden" id="product-image-data">
+        </div>
+        <div><label for="product-delivery-time" class="block text-sm font-medium text-gray-700 mb-1">Delivery Time</label> <select id="product-delivery-time" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"> <option value="8 MINS">8 MINS</option> <option value="15 MINS">15 MINS</option> <option value="30 MINS">30 MINS</option> </select>
+        </div>
+       </div>
+       <div><label for="product-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label> <textarea id="product-description" rows="2" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition resize-none"></textarea>
+       </div><button type="submit" id="add-product-btn" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> Add Product to Google Sheets </button>
+      </form>
+     </div>
+     <div class="bg-white rounded-xl p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">Your Products</h2>
+      <div id="farmer-products-list" class="space-y-3"></div>
+      <div id="farmer-no-products" class="hidden text-center py-8"><span class="text-4xl mb-3 block">��</span>
+       <p class="text-gray-500">No products yet. Add your first product!</p>
+      </div>
+     </div>
+    </main>
+   </div><!-- Delivery Dashboard -->
+   <div id="delivery-dashboard" class="hidden min-h-full bg-gray-50">
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><span class="text-2xl">🚴</span>
+       <div>
+        <h1 class="font-bold text-gray-800">Delivery Partner</h1>
+        <p id="delivery-name-display" class="text-sm text-gray-500"></p>
+       </div>
+      </div>
+      <div class="flex items-center gap-3"><button id="delivery-refresh" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">🔄 Refresh</button> <button id="delivery-logout" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-medium text-sm"> Logout </button>
+      </div>
+     </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-6"><!-- Stats Cards -->
+     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><span class="text-xl">📦</span>
+        </div>
+        <div>
+         <p id="delivery-stat-assigned" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Assigned</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center"><span class="text-xl">🚚</span>
+        </div>
+        <div>
+         <p id="delivery-stat-picked" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Picked Up</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center"><span class="text-xl">✅</span>
+        </div>
+        <div>
+         <p id="delivery-stat-delivered" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Delivered</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><span class="text-xl">💰</span>
+        </div>
+        <div>
+         <p id="delivery-stat-earnings" class="text-xl font-bold text-gray-800">₹0</p>
+         <p class="text-xs text-gray-500">Earnings</p>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="bg-white rounded-xl p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">📦 Your Assigned Orders</h2>
+      <div id="delivery-orders-list" class="space-y-4"></div>
+      <div id="delivery-no-orders" class="hidden text-center py-8"><span class="text-4xl mb-3 block">📦</span>
+       <p class="text-gray-500">No orders assigned to you yet</p>
+       <p class="text-sm text-gray-400 mt-2">Orders will appear here when admin assigns them to you</p>
+      </div>
+     </div>
+    </main>
+   </div><!-- Dark Store Dashboard -->
+   <div id="darkstore-dashboard" class="hidden min-h-full bg-gray-50">
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><span class="text-2xl">🏪</span>
+       <div>
+        <h1 class="font-bold text-gray-800">Dark Store Partner</h1>
+        <p id="darkstore-name-display" class="text-sm text-gray-500"></p>
+       </div>
+      </div>
+      <div class="flex items-center gap-3"><button id="darkstore-refresh" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">🔄 Refresh</button> <button id="darkstore-logout" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-medium text-sm"> Logout </button>
+      </div>
+     </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-6"><!-- Stats Cards -->
+     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><span class="text-xl">📦</span>
+        </div>
+        <div>
+         <p id="darkstore-stat-total" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Total Orders</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center"><span class="text-xl">⏳</span>
+        </div>
+        <div>
+         <p id="darkstore-stat-pending" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Pending</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center"><span class="text-xl">✅</span>
+        </div>
+        <div>
+         <p id="darkstore-stat-completed" class="text-xl font-bold text-gray-800">0</p>
+         <p class="text-xs text-gray-500">Completed</p>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm">
+       <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><span class="text-xl">💰</span>
+        </div>
+        <div>
+         <p id="darkstore-stat-revenue" class="text-xl font-bold text-gray-800">₹0</p>
+         <p class="text-xs text-gray-500">Revenue</p>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">🎫 Verify Delivery ID</h2>
+      <form id="verify-delivery-form" class="flex gap-3"><label for="verify-delivery-id" class="sr-only">Delivery ID</label> <input type="text" id="verify-delivery-id" placeholder="Enter Delivery ID (DID-XXXXX)" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"> <button type="submit" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition"> Verify </button>
+      </form>
+      <div id="verified-order-details" class="hidden mt-4 p-4 bg-emerald-50 rounded-xl border-2 border-emerald-200"></div>
+     </div>
+     <div class="bg-white rounded-xl p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">📋 All Orders</h2>
+      <div id="darkstore-orders-list" class="space-y-3"></div>
+      <div id="darkstore-no-orders" class="hidden text-center py-8"><span class="text-4xl mb-3 block">📦</span>
+       <p class="text-gray-500">No orders yet</p>
+      </div>
+     </div>
+    </main>
+   </div><!-- Admin Dashboard -->
+   <div id="admin-dashboard" class="hidden min-h-full bg-gray-50">
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3"><span class="text-2xl">👑</span>
+       <div>
+        <h1 class="font-bold text-gray-800">Admin Dashboard</h1>
+        <p class="text-sm text-gray-500">Manage everything</p>
+       </div>
+      </div>
+      <div class="flex items-center gap-3"><span class="text-sm text-emerald-600 font-medium">📊 Google Sheets</span> <button id="admin-logout" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition font-medium text-sm"> Logout </button>
+      </div>
+     </div><!-- Admin Tabs -->
+     <div class="border-t bg-gray-50">
+      <div class="max-w-7xl mx-auto px-4">
+       <div class="flex gap-1 overflow-x-auto py-2 no-scrollbar"><button class="admin-tab px-4 py-2 rounded-lg font-medium text-sm transition bg-emerald-600 text-white" data-tab="overview">📊 Overview</button> <button class="admin-tab px-4 py-2 rounded-lg font-medium text-sm transition hover:bg-gray-200 text-gray-600" data-tab="site-settings">🎨 Site Settings</button> <button class="admin-tab px-4 py-2 rounded-lg font-medium text-sm transition hover:bg-gray-200 text-gray-600" data-tab="products">🥬 Products</button> <button class="admin-tab px-4 py-2 rounded-lg font-medium text-sm transition hover:bg-gray-200 text-gray-600" data-tab="orders">📦 Orders</button> <button class="admin-tab px-4 py-2 rounded-lg font-medium text-sm transition hover:bg-gray-200 text-gray-600" data-tab="users">👥 Users</button>
+       </div>
+      </div>
+     </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-6"><!-- Site Settings Tab -->
+     <div id="admin-site-settings" class="admin-panel hidden"><!-- Hero Banner Settings -->
+      <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+       <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">🖼️ Hero Banner Settings</h3>
+       <form id="hero-settings-form" class="space-y-4">
+        <div class="grid md:grid-cols-2 gap-4">
+         <div><label for="hero-title" class="block text-sm font-medium text-gray-700 mb-1">Hero Title</label> <input type="text" id="hero-title" placeholder="Farm Fresh, Swift Delivery!" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="hero-subtitle" class="block text-sm font-medium text-gray-700 mb-1">Hero Subtitle</label> <input type="text" id="hero-subtitle" placeholder="Get fresh produce delivered in 8 minutes" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="hero-badge" class="block text-sm font-medium text-gray-700 mb-1">Badge Text</label> <input type="text" id="hero-badge" placeholder="⚡ Lightning Fast Delivery" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="hero-tag" class="block text-sm font-medium text-gray-700 mb-1">Tag Line</label> <input type="text" id="hero-tag" placeholder="📊 Powered by Google Sheets" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div class="col-span-2"><label for="hero-bg-image" class="block text-sm font-medium text-gray-700 mb-1">Background Image</label>
+          <div class="flex items-center gap-4"><label class="flex-1 flex items-center justify-center gap-2 px-4 py-4 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition"> <span class="text-2xl">🖼️</span> <span class="text-sm text-gray-600">Click to upload background image</span> <input type="file" id="hero-bg-image" accept="image/*" class="hidden" onchange="previewHeroBgImage(this)"> </label>
+           <div id="hero-bg-preview" class="w-24 h-16 rounded-xl overflow-hidden bg-gray-100 border-2 border-emerald-500 flex-shrink-0 hidden"><img id="hero-bg-preview-img" src="" alt="Preview" class="w-full h-full object-cover">
+           </div>
+          </div><input type="hidden" id="hero-bg-image-data">
+          <p class="text-xs text-gray-500 mt-1">Recommended: 1920x400px or similar wide format</p>
+         </div>
+         <div><label for="hero-emoji" class="block text-sm font-medium text-gray-700 mb-1">Hero Emoji</label> <input type="text" id="hero-emoji" placeholder="🥗" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="hero-gradient-from" class="block text-sm font-medium text-gray-700 mb-1">Gradient Start Color</label>
+          <div class="flex items-center gap-2"><input type="color" id="hero-gradient-from" value="#10b981" class="w-12 h-10 rounded-lg border border-gray-300 cursor-pointer"> <input type="text" id="hero-gradient-from-text" value="#10b981" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition font-mono text-sm">
+          </div>
+         </div>
+         <div><label for="hero-gradient-to" class="block text-sm font-medium text-gray-700 mb-1">Gradient End Color</label>
+          <div class="flex items-center gap-2"><input type="color" id="hero-gradient-to" value="#14b8a6" class="w-12 h-10 rounded-lg border border-gray-300 cursor-pointer"> <input type="text" id="hero-gradient-to-text" value="#14b8a6" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition font-mono text-sm">
+          </div>
+         </div>
+        </div>
+        <div class="flex gap-3"><button type="submit" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition flex items-center gap-2"> 💾 Save Hero Settings </button> <button type="button" onclick="resetHeroSettings()" class="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-medium hover:bg-gray-300 transition"> 🔄 Reset to Default </button>
+        </div>
+       </form><!-- Hero Preview -->
+       <div class="mt-6">
+        <h4 class="text-sm font-medium text-gray-700 mb-2">Preview:</h4>
+        <div id="hero-preview" class="relative overflow-hidden rounded-xl h-32 bg-gradient-to-r from-emerald-600 to-teal-500">
+         <div class="h-full flex items-center px-6">
+          <div class="text-white">
+           <p id="hero-preview-badge" class="text-xs font-medium bg-white/20 inline-block px-2 py-0.5 rounded-full mb-1">⚡ Lightning Fast Delivery</p>
+           <h2 id="hero-preview-title" class="text-lg font-bold">Farm Fresh, Swift Delivery!</h2>
+           <p id="hero-preview-subtitle" class="text-xs text-emerald-100">Get fresh produce delivered in 8 minutes</p>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div><!-- About Section Settings -->
+      <div class="bg-white rounded-xl p-6 shadow-sm">
+       <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">📝 About Section Settings</h3>
+       <div class="flex items-center gap-3 mb-4"><label class="relative inline-flex items-center cursor-pointer"> <input type="checkbox" id="about-enabled" class="sr-only peer" checked>
+         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div></label> <span class="text-sm font-medium text-gray-700">Show About Section</span>
+       </div>
+       <form id="about-settings-form" class="space-y-4">
+        <div class="grid md:grid-cols-2 gap-4">
+         <div class="col-span-2"><label for="about-title" class="block text-sm font-medium text-gray-700 mb-1">Section Title</label> <input type="text" id="about-title" placeholder="About FarmSwift" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div class="col-span-2"><label for="about-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label> <textarea id="about-description" rows="4" placeholder="Write about your business..." class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition resize-none"></textarea>
+         </div>
+         <div class="col-span-2"><label for="about-image" class="block text-sm font-medium text-gray-700 mb-1">About Section Image</label>
+          <div class="flex items-center gap-4"><label class="flex-1 flex items-center justify-center gap-2 px-4 py-4 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition"> <span class="text-2xl">📷</span> <span class="text-sm text-gray-600">Click to upload about image</span> <input type="file" id="about-image" accept="image/*" class="hidden" onchange="previewAboutImage(this)"> </label>
+           <div id="about-image-preview" class="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 border-2 border-emerald-500 flex-shrink-0 hidden"><img id="about-image-preview-img" src="" alt="Preview" class="w-full h-full object-cover">
+           </div>
+          </div><input type="hidden" id="about-image-data">
+         </div>
+         <div><label for="about-mission-title" class="block text-sm font-medium text-gray-700 mb-1">Mission Title</label> <input type="text" id="about-mission-title" placeholder="Our Mission" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="about-vision-title" class="block text-sm font-medium text-gray-700 mb-1">Vision Title</label> <input type="text" id="about-vision-title" placeholder="Our Vision" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="about-mission-text" class="block text-sm font-medium text-gray-700 mb-1">Mission Text</label> <textarea id="about-mission-text" rows="2" placeholder="Our mission is..." class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition resize-none"></textarea>
+         </div>
+         <div><label for="about-vision-text" class="block text-sm font-medium text-gray-700 mb-1">Vision Text</label> <textarea id="about-vision-text" rows="2" placeholder="Our vision is..." class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition resize-none"></textarea>
+         </div>
+        </div><button type="submit" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition flex items-center gap-2"> 💾 Save About Settings </button>
+       </form>
+      </div>
+     </div><!-- Overview Tab -->
+     <div id="admin-overview" class="admin-panel">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+       <div class="bg-white rounded-xl p-5 shadow-sm">
+        <div class="flex items-center gap-3">
+         <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center"><span class="text-2xl">🥬</span>
+         </div>
+         <div>
+          <p class="text-2xl font-bold text-gray-800" id="stat-products">0</p>
+          <p class="text-sm text-gray-500">Products</p>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl p-5 shadow-sm">
+        <div class="flex items-center gap-3">
+         <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center"><span class="text-2xl">📦</span>
+         </div>
+         <div>
+          <p class="text-2xl font-bold text-gray-800" id="stat-orders">0</p>
+          <p class="text-sm text-gray-500">Orders</p>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl p-5 shadow-sm">
+        <div class="flex items-center gap-3">
+         <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center"><span class="text-2xl">👥</span>
+         </div>
+         <div>
+          <p class="text-2xl font-bold text-gray-800" id="stat-users">0</p>
+          <p class="text-sm text-gray-500">Users</p>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl p-5 shadow-sm">
+        <div class="flex items-center gap-3">
+         <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center"><span class="text-2xl">💰</span>
+         </div>
+         <div>
+          <p class="text-2xl font-bold text-gray-800" id="stat-revenue">₹0</p>
+          <p class="text-sm text-gray-500">Revenue</p>
+         </div>
+        </div>
+       </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+       <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="font-bold text-gray-800 mb-4">📦 Recent Orders</h3>
+        <div id="admin-recent-orders" class="space-y-3 max-h-80 overflow-y-auto"></div>
+       </div>
+       <div class="bg-white rounded-xl p-6 shadow-sm">
+        <h3 class="font-bold text-gray-800 mb-4">⏳ Pending Products</h3>
+        <div id="admin-pending-products" class="space-y-3 max-h-80 overflow-y-auto"></div>
+       </div>
+      </div>
+     </div><!-- Products Tab -->
+     <div id="admin-products" class="admin-panel hidden">
+      <div class="bg-white rounded-xl p-6 shadow-sm mb-6">
+       <h3 class="font-bold text-gray-800 mb-4">Add New Product (Admin)</h3>
+       <form id="admin-add-product-form" class="space-y-4">
+        <div class="grid md:grid-cols-3 gap-4">
+         <div><label for="admin-product-name" class="block text-sm font-medium text-gray-700 mb-1">Product Name</label> <input type="text" id="admin-product-name" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="admin-product-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label> <select id="admin-product-category" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition"> <option value="vegetables">Vegetables</option> <option value="fruits">Fruits</option> <option value="dairy">Dairy</option> <option value="grains">Grains</option> <option value="spices">Spices</option> <option value="organic">Organic</option> </select>
+         </div>
+         <div><label for="admin-product-price" class="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label> <input type="number" id="admin-product-price" required min="1" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="admin-product-quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label> <input type="text" id="admin-product-quantity" placeholder="e.g., 500g, 1kg" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+         </div>
+         <div><label for="admin-product-image" class="block text-sm font-medium text-gray-700 mb-1">Product Photo</label>
+          <div class="flex items-center gap-3"><label class="flex-1 flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition"> <span class="text-xl">📷</span> <span class="text-xs text-gray-600">Upload photo</span> <input type="file" id="admin-product-image" accept="image/*" class="hidden" onchange="previewAdminImage(this)"> </label>
+           <div id="admin-image-preview" class="hidden w-12 h-12 rounded-lg overflow-hidden bg-gray-100 border-2 border-emerald-500 flex-shrink-0"><img id="admin-preview-img" src="" alt="Preview" class="w-full h-full object-cover">
+           </div>
+          </div><input type="hidden" id="admin-product-image-data">
+         </div>
+         <div><label for="admin-product-delivery" class="block text-sm font-medium text-gray-700 mb-1">Delivery Time</label> <select id="admin-product-delivery" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition"> <option value="8 MINS">8 MINS</option> <option value="15 MINS">15 MINS</option> <option value="30 MINS">30 MINS</option> </select>
+         </div>
+        </div><button type="submit" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition"> + Add Product </button>
+       </form>
+      </div>
+      <div class="bg-white rounded-xl p-6 shadow-sm">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-gray-800">All Products</h3><button id="admin-refresh-products" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">���� Refresh</button>
+       </div>
+       <div id="admin-products-list" class="space-y-3 max-h-96 overflow-y-auto"></div>
+      </div>
+     </div><!-- Orders Tab -->
+     <div id="admin-orders" class="admin-panel hidden">
+      <div class="bg-white rounded-xl p-6 shadow-sm">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-gray-800">All Orders</h3><button id="admin-refresh-orders" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">🔄 Refresh</button>
+       </div>
+       <div id="admin-orders-list" class="space-y-4 max-h-[600px] overflow-y-auto"></div>
+      </div>
+     </div><!-- Users Tab -->
+     <div id="admin-users" class="admin-panel hidden">
+      <div class="bg-white rounded-xl p-6 shadow-sm">
+       <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-gray-800">All Users</h3><button id="admin-refresh-users" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">🔄 Refresh</button>
+       </div>
+       <div id="admin-users-list" class="space-y-3 max-h-[600px] overflow-y-auto"></div>
+      </div>
+     </div>
+    </main>
+   </div><!-- Assign Order Modal (Admin) -->
+   <div id="assign-order-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay" onclick="closeAssignOrderModal()"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+     <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+       <h2 class="text-xl font-bold text-gray-800">���� Assign Delivery Partner</h2><button onclick="closeAssignOrderModal()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg></button>
+      </div>
+      <div id="assign-order-info" class="bg-gray-50 rounded-xl p-4 mb-4"><!-- Order info will be populated here -->
+      </div>
+      <div class="mb-4"><label for="select-delivery-partner" class="block text-sm font-medium text-gray-700 mb-2">Select Delivery Partner</label> <select id="select-delivery-partner" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition"> <option value="">-- Choose Partner --</option> </select>
+      </div>
+      <div id="assignment-id-preview" class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-xl mb-4 hidden">
+       <p class="text-xs opacity-80">🎫 Assignment ID</p>
+       <p id="new-assignment-id" class="text-xl font-mono font-bold"></p>
+      </div><button onclick="confirmAssignOrder()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> �� Assign Order </button>
+     </div>
+    </div>
+   </div><!-- Edit Product Modal (Admin) -->
+   <div id="edit-product-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 modal-overlay" onclick="closeEditProductModal()"></div>
+    <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90%] overflow-y-auto">
+     <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+       <h2 class="text-xl font-bold text-gray-800">✏️ Edit Product</h2><button onclick="closeEditProductModal()" class="p-2 hover:bg-gray-100 rounded-lg transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg></button>
+      </div>
+      <form id="edit-product-form" class="space-y-4"><input type="hidden" id="edit-product-id">
+       <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2"><label for="edit-product-name" class="block text-sm font-medium text-gray-700 mb-1">Product Name</label> <input type="text" id="edit-product-name" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+        </div>
+        <div><label for="edit-product-price" class="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label> <input type="number" id="edit-product-price" required min="1" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+        </div>
+        <div><label for="edit-product-original-price" class="block text-sm font-medium text-gray-700 mb-1">Original Price (₹)</label> <input type="number" id="edit-product-original-price" min="0" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+        </div>
+        <div><label for="edit-product-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label> <select id="edit-product-category" required class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition"> <option value="vegetables">Vegetables</option> <option value="fruits">Fruits</option> <option value="dairy">Dairy</option> <option value="grains">Grains</option> <option value="spices">Spices</option> <option value="organic">Organic</option> </select>
+        </div>
+        <div><label for="edit-product-quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label> <input type="text" id="edit-product-quantity" required placeholder="e.g., 500g, 1kg" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition">
+        </div>
+        <div class="col-span-2"><label for="edit-product-image" class="block text-sm font-medium text-gray-700 mb-1">Product Photo</label>
+         <div class="flex items-center gap-4"><label class="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition"> <span class="text-2xl">📷</span> <span class="text-sm text-gray-600">Click to upload new photo</span> <input type="file" id="edit-product-image-file" accept="image/*" class="hidden" onchange="previewEditImage(this)"> </label>
+          <div id="edit-product-preview" class="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 border-2 border-emerald-500 flex-shrink-0"><img id="edit-product-preview-img" src="" alt="Preview" class="w-full h-full object-cover">
+          </div>
+         </div><input type="hidden" id="edit-product-image">
+        </div>
+        <div><label for="edit-product-delivery" class="block text-sm font-medium text-gray-700 mb-1">Delivery Time</label> <select id="edit-product-delivery" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition"> <option value="8 MINS">8 MINS</option> <option value="15 MINS">15 MINS</option> <option value="30 MINS">30 MINS</option> </select>
+        </div>
+        <div class="col-span-2"><label for="edit-product-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label> <textarea id="edit-product-description" rows="2" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition resize-none"></textarea>
+        </div>
+        <div class="col-span-2"><label for="edit-product-status" class="block text-sm font-medium text-gray-700 mb-1">Status</label> <select id="edit-product-status" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition"> <option value="approved">Approved (Visible)</option> <option value="pending">Pending</option> <option value="rejected">Rejected (Hidden)</option> </select>
+        </div>
+       </div>
+       <div class="flex gap-3 pt-2"><button type="submit" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition"> 💾 Save Changes </button> <button type="button" onclick="deleteProduct()" class="px-6 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition"> ��️ Delete </button>
+       </div>
+      </form>
+     </div>
+    </div>
+   </div><!-- Toast Container -->
+   <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+  </div>
+  <script>
+    // ============================================
+    // GOOGLE SHEETS API CONFIGURATION
+    // ============================================
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGlHyrrl1nldXr4nmAbtZoUOAvhl-DxCTLILkxOjBlIx0I5yu3Bfc8S6KqruqP00pMMw/exec';
+    
+    // ============================================
+    // STATE MANAGEMENT
+    // ============================================
+    let products = [];
+    let orders = [];
+    let users = [];
+    let cart = [];
+    let currentUser = null;
+    let selectedUserType = null;
+    let currentOrderAddress = {};
+    let editingProduct = null;
+    
+    // Site settings state
+    let siteSettings = {
+      hero: {
+        title: 'Farm Fresh, Swift Delivery!',
+        subtitle: 'Get fresh produce delivered in 8 minutes',
+        badge: '⚡ Lightning Fast Delivery',
+        tag: '📊 Powered by Google Sheets',
+        emoji: '🥗',
+        bgImage: '',
+        gradientFrom: '#10b981',
+        gradientTo: '#14b8a6'
+      },
+      about: {
+        enabled: true,
+        title: 'About FarmSwift',
+        description: 'FarmSwift is your trusted partner for farm-fresh produce delivered straight to your doorstep. We connect local farmers directly with consumers, ensuring the freshest quality while supporting sustainable farming practices.',
+        image: '',
+        missionTitle: 'Our Mission',
+        missionText: 'To deliver farm-fresh produce within minutes while supporting local farmers.',
+        visionTitle: 'Our Vision',
+        visionText: 'To become the leading platform connecting farms and homes sustainably.'
+      }
+    };
+    
+    // Default products with real photos
+    const DEFAULT_PRODUCTS = [
+      { id: 'PRD-001', product_name: 'Fresh Tomatoes', price: 40, original_price: 50, category: 'vegetables', quantity: '500g', image: 'https://images.unsplash.com/photo-1546470427-227c7369a9b8?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Farm fresh red tomatoes', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-002', product_name: 'Green Spinach', price: 30, original_price: 40, category: 'vegetables', quantity: '250g', image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Organic spinach leaves', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-003', product_name: 'Fresh Carrots', price: 45, original_price: 55, category: 'vegetables', quantity: '500g', image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Crunchy orange carrots', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-004', product_name: 'Potatoes', price: 35, original_price: 45, category: 'vegetables', quantity: '1kg', image: 'https://images.unsplash.com/photo-1518977676601-b53f82ber64a?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Fresh potatoes', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-005', product_name: 'Red Apples', price: 120, original_price: 150, category: 'fruits', quantity: '500g', image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Crispy red apples', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-006', product_name: 'Bananas', price: 50, original_price: 60, category: 'fruits', quantity: '6 pcs', image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Ripe yellow bananas', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-007', product_name: 'Fresh Oranges', price: 80, original_price: 100, category: 'fruits', quantity: '500g', image: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Juicy oranges', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-008', product_name: 'Grapes', price: 90, original_price: 110, category: 'fruits', quantity: '500g', image: 'https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Sweet seedless grapes', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-009', product_name: 'Fresh Milk', price: 60, original_price: 65, category: 'dairy', quantity: '1L', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Farm fresh milk', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-010', product_name: 'Paneer', price: 110, original_price: 130, category: 'dairy', quantity: '200g', image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Fresh cottage cheese', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-011', product_name: 'Curd', price: 45, original_price: 50, category: 'dairy', quantity: '500g', image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Fresh natural curd', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-012', product_name: 'Basmati Rice', price: 180, original_price: 220, category: 'grains', quantity: '1kg', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300&h=300&fit=crop', delivery_time: '15 MINS', description: 'Premium basmati rice', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-013', product_name: 'Wheat Flour', price: 55, original_price: 65, category: 'grains', quantity: '1kg', image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=300&h=300&fit=crop', delivery_time: '15 MINS', description: 'Fresh ground wheat flour', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-014', product_name: 'Red Chilli', price: 70, original_price: 85, category: 'spices', quantity: '100g', image: 'https://images.unsplash.com/photo-1583119022894-919a68a3d0e3?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Hot red chillies', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-015', product_name: 'Turmeric Powder', price: 65, original_price: 80, category: 'spices', quantity: '100g', image: 'https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Pure turmeric powder', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-016', product_name: 'Organic Honey', price: 250, original_price: 300, category: 'organic', quantity: '500g', image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=300&h=300&fit=crop', delivery_time: '15 MINS', description: 'Pure organic honey', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-017', product_name: 'Fresh Eggs', price: 85, original_price: 95, category: 'dairy', quantity: '12 pcs', image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Farm fresh eggs', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-018', product_name: 'Broccoli', price: 60, original_price: 75, category: 'organic', quantity: '250g', image: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Fresh organic broccoli', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-019', product_name: 'Cucumber', price: 25, original_price: 35, category: 'vegetables', quantity: '500g', image: 'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Fresh green cucumbers', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' },
+      { id: 'PRD-020', product_name: 'Sweet Corn', price: 40, original_price: 50, category: 'vegetables', quantity: '2 pcs', image: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=300&h=300&fit=crop', delivery_time: '8 MINS', description: 'Sweet fresh corn', status: 'approved', farmer_id: 'STORE', farmer_name: 'FarmSwift' }
+    ];
+
+    // Default config for Element SDK
+    const defaultConfig = {
+      site_title: 'FarmSwift',
+      hero_text: 'Farm Fresh, Swift Delivery! �����',
+      primary_color: '#10b981',
+      secondary_color: '#ffffff',
+      text_color: '#1f2937',
+      accent_color: '#f59e0b',
+      background_color: '#f9fafb'
+    };
+
+    // ============================================
+    // GOOGLE SHEETS API FUNCTIONS
+    // ============================================
+    
+    async function fetchFromSheet(sheetName) {
+      try {
+        const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getAll&sheet=${sheetName}`);
+        const result = await response.json();
+        if (result.success) {
+          return result.data || [];
+        }
+        console.error('Fetch error:', result.error);
+        return [];
+      } catch (error) {
+        console.error('Network error:', error);
+        return [];
+      }
+    }
+
+    async function createRecord(sheetName, record) {
+      try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create', sheet: sheetName, record }),
+          mode: 'no-cors'
+        });
+        return { success: true };
+      } catch (error) {
+        console.error('Create error:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    async function updateRecord(sheetName, record) {
+      try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update', sheet: sheetName, record }),
+          mode: 'no-cors'
+        });
+        return { success: true };
+      } catch (error) {
+        console.error('Update error:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    function generateId(prefix) {
+      return `${prefix}-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    }
+
+    // Image upload preview functions
+    // Site settings image preview functions
+    function previewHeroBgImage(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imageData = e.target.result;
+          document.getElementById('hero-bg-image-data').value = imageData;
+          document.getElementById('hero-bg-preview-img').src = imageData;
+          document.getElementById('hero-bg-preview').classList.remove('hidden');
+          updateHeroPreview();
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function previewAboutImage(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imageData = e.target.result;
+          document.getElementById('about-image-data').value = imageData;
+          document.getElementById('about-image-preview-img').src = imageData;
+          document.getElementById('about-image-preview').classList.remove('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function updateHeroPreview() {
+      const preview = document.getElementById('hero-preview');
+      const titleEl = document.getElementById('hero-preview-title');
+      const subtitleEl = document.getElementById('hero-preview-subtitle');
+      const badgeEl = document.getElementById('hero-preview-badge');
+      const emojiEl = document.getElementById('hero-preview-emoji');
+      
+      const title = document.getElementById('hero-title').value || siteSettings.hero.title;
+      const subtitle = document.getElementById('hero-subtitle').value || siteSettings.hero.subtitle;
+      const badge = document.getElementById('hero-badge').value || siteSettings.hero.badge;
+      const emoji = document.getElementById('hero-emoji').value || siteSettings.hero.emoji;
+      const bgImage = document.getElementById('hero-bg-image-data').value;
+      const gradientFrom = document.getElementById('hero-gradient-from').value;
+      const gradientTo = document.getElementById('hero-gradient-to').value;
+      
+      titleEl.textContent = title;
+      subtitleEl.textContent = subtitle;
+      badgeEl.textContent = badge;
+      emojiEl.textContent = emoji;
+      
+      // Reset styles first
+      preview.style.backgroundImage = '';
+      preview.style.background = '';
+      
+      if (bgImage && bgImage.length > 0) {
+        // Show uploaded image with gradient overlay
+        preview.style.backgroundImage = `linear-gradient(to right, ${gradientFrom}dd, ${gradientTo}bb), url("${bgImage}")`;
+        preview.style.backgroundSize = 'cover';
+        preview.style.backgroundPosition = 'center';
+        preview.style.backgroundRepeat = 'no-repeat';
+      } else {
+        // Just show gradient
+        preview.style.background = `linear-gradient(to right, ${gradientFrom}, ${gradientTo})`;
+      }
+    }
+
+    function applyHeroSettings() {
+      const heroBanner = document.getElementById('hero-banner');
+      const heroOverlay = document.getElementById('hero-overlay');
+      const heroText = document.getElementById('hero-text');
+      const heroSubtitle = document.getElementById('hero-subtitle-text');
+      const heroBadge = document.getElementById('hero-badge-text');
+      const heroTag = document.getElementById('hero-tag-text');
+      const heroEmoji = document.getElementById('hero-emoji-display');
+      
+      if (heroText) heroText.textContent = siteSettings.hero.title;
+      if (heroSubtitle) heroSubtitle.textContent = siteSettings.hero.subtitle;
+      if (heroBadge) heroBadge.textContent = siteSettings.hero.badge;
+      if (heroTag) heroTag.textContent = siteSettings.hero.tag;
+      if (heroEmoji) heroEmoji.textContent = siteSettings.hero.emoji;
+      
+      if (heroBanner) {
+        // Reset all background styles first
+        heroBanner.style.backgroundImage = '';
+        heroBanner.style.background = '';
+        
+        if (siteSettings.hero.bgImage && siteSettings.hero.bgImage.length > 0) {
+          // Apply background image with proper CSS
+          heroBanner.style.backgroundImage = `url("${siteSettings.hero.bgImage}")`;
+          heroBanner.style.backgroundSize = 'cover';
+          heroBanner.style.backgroundPosition = 'center';
+          heroBanner.style.backgroundRepeat = 'no-repeat';
+          // Show gradient overlay on top of image
+          if (heroOverlay) {
+            heroOverlay.style.background = `linear-gradient(to right, ${siteSettings.hero.gradientFrom}dd, ${siteSettings.hero.gradientTo}bb)`;
+            heroOverlay.style.display = 'block';
+          }
+        } else {
+          // No image - use gradient as background
+          heroBanner.style.background = `linear-gradient(to right, ${siteSettings.hero.gradientFrom}, ${siteSettings.hero.gradientTo})`;
+          if (heroOverlay) {
+            heroOverlay.style.background = 'transparent';
+          }
+        }
+      }
+    }
+
+    function applyAboutSettings() {
+      const aboutSection = document.getElementById('about-section');
+      if (!aboutSection) return;
+      
+      if (!siteSettings.about.enabled) {
+        aboutSection.classList.add('hidden');
+        return;
+      }
+      
+      aboutSection.classList.remove('hidden');
+      
+      const titleEl = document.getElementById('about-section-title');
+      const descEl = document.getElementById('about-section-description');
+      const imageContainer = document.getElementById('about-image-container');
+      const missionTitleEl = document.getElementById('about-mission-title-display');
+      const missionTextEl = document.getElementById('about-mission-text-display');
+      const visionTitleEl = document.getElementById('about-vision-title-display');
+      const visionTextEl = document.getElementById('about-vision-text-display');
+      
+      if (titleEl) titleEl.textContent = siteSettings.about.title;
+      if (descEl) descEl.textContent = siteSettings.about.description;
+      if (missionTitleEl) missionTitleEl.textContent = siteSettings.about.missionTitle;
+      if (missionTextEl) missionTextEl.textContent = siteSettings.about.missionText;
+      if (visionTitleEl) visionTitleEl.textContent = siteSettings.about.visionTitle;
+      if (visionTextEl) visionTextEl.textContent = siteSettings.about.visionText;
+      
+      if (imageContainer && siteSettings.about.image) {
+        imageContainer.innerHTML = `<img src="${siteSettings.about.image}" alt="About" class="w-full h-full object-cover">`;
+      } else if (imageContainer && !siteSettings.about.image) {
+        imageContainer.innerHTML = '<span class="text-8xl">🌾</span>';
+      }
+    }
+
+    function resetHeroSettings() {
+      siteSettings.hero = {
+        title: 'Farm Fresh, Swift Delivery!',
+        subtitle: 'Get fresh produce delivered in 8 minutes',
+        badge: '⚡ Lightning Fast Delivery',
+        tag: '📊 Powered by Google Sheets',
+        emoji: '🥗',
+        bgImage: '',
+        gradientFrom: '#10b981',
+        gradientTo: '#14b8a6'
+      };
+      loadSiteSettingsToForm();
+      applyHeroSettings();
+      showToast('Hero settings reset to default! 🔄');
+    }
+
+    function loadSiteSettingsToForm() {
+      // Hero settings
+      document.getElementById('hero-title').value = siteSettings.hero.title;
+      document.getElementById('hero-subtitle').value = siteSettings.hero.subtitle;
+      document.getElementById('hero-badge').value = siteSettings.hero.badge;
+      document.getElementById('hero-tag').value = siteSettings.hero.tag;
+      document.getElementById('hero-emoji').value = siteSettings.hero.emoji;
+      document.getElementById('hero-gradient-from').value = siteSettings.hero.gradientFrom;
+      document.getElementById('hero-gradient-from-text').value = siteSettings.hero.gradientFrom;
+      document.getElementById('hero-gradient-to').value = siteSettings.hero.gradientTo;
+      document.getElementById('hero-gradient-to-text').value = siteSettings.hero.gradientTo;
+      document.getElementById('hero-bg-image-data').value = siteSettings.hero.bgImage;
+      
+      if (siteSettings.hero.bgImage) {
+        document.getElementById('hero-bg-preview-img').src = siteSettings.hero.bgImage;
+        document.getElementById('hero-bg-preview').classList.remove('hidden');
+      }
+      
+      // About settings
+      document.getElementById('about-enabled').checked = siteSettings.about.enabled;
+      document.getElementById('about-title').value = siteSettings.about.title;
+      document.getElementById('about-description').value = siteSettings.about.description;
+      document.getElementById('about-mission-title').value = siteSettings.about.missionTitle;
+      document.getElementById('about-mission-text').value = siteSettings.about.missionText;
+      document.getElementById('about-vision-title').value = siteSettings.about.visionTitle;
+      document.getElementById('about-vision-text').value = siteSettings.about.visionText;
+      document.getElementById('about-image-data').value = siteSettings.about.image;
+      
+      if (siteSettings.about.image) {
+        document.getElementById('about-image-preview-img').src = siteSettings.about.image;
+        document.getElementById('about-image-preview').classList.remove('hidden');
+      }
+      
+      updateHeroPreview();
+    }
+
+    function previewFarmerImage(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imageData = e.target.result;
+          document.getElementById('product-image-data').value = imageData;
+          document.getElementById('farmer-preview-img').src = imageData;
+          document.getElementById('farmer-image-preview').classList.remove('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function previewAdminImage(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imageData = e.target.result;
+          document.getElementById('admin-product-image-data').value = imageData;
+          document.getElementById('admin-preview-img').src = imageData;
+          document.getElementById('admin-image-preview').classList.remove('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function previewEditImage(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imageData = e.target.result;
+          document.getElementById('edit-product-image').value = imageData;
+          document.getElementById('edit-product-preview-img').src = imageData;
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `px-4 py-3 rounded-xl shadow-lg text-sm font-medium transform transition-all duration-300 ${
+        type === 'success' ? 'bg-emerald-600 text-white' : 
+        type === 'error' ? 'bg-red-600 text-white' : 
+        'bg-amber-500 text-white'
+      }`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // ============================================
+    // DATA LOADING
+    // ============================================
+    
+    async function loadAllData() {
+      try {
+        const [productsData, ordersData, usersData] = await Promise.all([
+          fetchFromSheet('Products'),
+          fetchFromSheet('Orders'),
+          fetchFromSheet('Users')
+        ]);
+        
+        // Merge default products with Google Sheets products
+        const sheetProducts = productsData.filter(p => p.product_name && p.status === 'approved');
+        
+        // Start with default products, then add any from sheets that aren't duplicates
+        products = [...DEFAULT_PRODUCTS];
+        sheetProducts.forEach(sp => {
+          if (!products.find(p => p.id === sp.id)) {
+            products.push(sp);
+          }
+        });
+        
+        orders = ordersData;
+        users = usersData;
+        
+        return true;
+      } catch (error) {
+        console.error('Failed to load data:', error);
+        // Even if sheets fail, show default products
+        products = [...DEFAULT_PRODUCTS];
+        return true;
+      }
+    }
+
+    async function refreshProducts() {
+      const refreshIcon = document.getElementById('refresh-icon');
+      refreshIcon.textContent = '���';
+      
+      products = await fetchFromSheet('Products');
+      products = products.filter(p => p.product_name && p.status === 'approved');
+      renderProducts();
+      
+      refreshIcon.textContent = '🔄';
+      showToast('Products refreshed! ����');
+    }
+
+    // ============================================
+    // RENDER FUNCTIONS
+    // ============================================
+    
+    function renderProducts() {
+      const grid = document.getElementById('products-grid');
+      const noProducts = document.getElementById('no-products');
+      const loading = document.getElementById('products-loading');
+      const countEl = document.getElementById('product-count');
+      const searchInput = document.getElementById('search-input');
+      
+      loading.classList.add('hidden');
+      
+      // Only show approved products to customers
+      let filteredProducts = products.filter(p => p.status === 'approved');
+      const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+      const activeCategory = document.querySelector('.category-btn.bg-emerald-100');
+      const category = activeCategory ? activeCategory.dataset.category : 'all';
+      
+      if (searchTerm) {
+        filteredProducts = filteredProducts.filter(p => 
+          p.product_name?.toLowerCase().includes(searchTerm) || 
+          p.description?.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      if (category && category !== 'all') {
+        filteredProducts = filteredProducts.filter(p => p.category === category);
+      }
+      
+      countEl.textContent = `${filteredProducts.length} items available`;
+      
+      if (filteredProducts.length === 0) {
+        grid.classList.add('hidden');
+        noProducts.classList.remove('hidden');
+        return;
+      }
+      
+      grid.classList.remove('hidden');
+      noProducts.classList.add('hidden');
+      
+      grid.innerHTML = filteredProducts.map(product => `
+        <div class="product-card bg-white rounded-xl overflow-hidden shadow-sm transition-all duration-300 cursor-pointer">
+          <div class="relative bg-gray-100">
+            <span class="absolute top-2 left-2 bg-emerald-600 text-white text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1 z-10">
+              ⚡ ${product.delivery_time || '8 MINS'}
+            </span>
+            ${product.image && product.image.startsWith('http') 
+              ? `<div class="w-full h-32 bg-gray-100 flex items-center justify-center overflow-hidden">
+                  <img src="${product.image}" alt="${product.product_name}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\'text-5xl text-center py-6\\'>🥬</div>'">
+                </div>`
+              : `<div class="text-5xl text-center py-6">${product.image || '🥬'}</div>`
+            }
+          </div>
+          <div class="p-3">
+            <h3 class="font-semibold text-gray-800 text-sm truncate">${product.product_name}</h3>
+            <p class="text-xs text-gray-500 mb-2">${product.quantity || ''}</p>
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="font-bold text-gray-800">₹${product.price}</span>
+                ${product.original_price ? `<span class="text-xs text-gray-400 line-through ml-1">₹${product.original_price}</span>` : ''}
+              </div>
+              <button onclick="addToCart('${product.id}')" class="add-btn bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-emerald-600 hover:text-white transition">
+                + ADD
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addToCart(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+      
+      const existingItem = cart.find(item => item.productId === productId);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        cart.push({
+          productId,
+          name: product.product_name,
+          price: parseFloat(product.price),
+          image: product.image || '🥬',
+          quantity: 1,
+          farmerId: product.farmer_id
+        });
+      }
+      
+      updateCartUI();
+      showToast(`${product.product_name} added! ⚡`);
+    }
+
+    function updateCartUI() {
+      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      document.getElementById('cart-count').textContent = count;
+      document.getElementById('cart-total').textContent = `₹${total}`;
+      document.getElementById('cart-total-sidebar').textContent = `₹${total}`;
+      document.getElementById('payment-total').textContent = `₹${total}`;
+      
+      const cartItems = document.getElementById('cart-items');
+      const cartEmpty = document.getElementById('cart-empty');
+      const cartFooter = document.getElementById('cart-footer');
+      
+      if (cart.length === 0) {
+        cartItems.classList.add('hidden');
+        cartEmpty.classList.remove('hidden');
+        cartFooter.classList.add('hidden');
+      } else {
+        cartItems.classList.remove('hidden');
+        cartEmpty.classList.add('hidden');
+        cartFooter.classList.remove('hidden');
+        
+        cartItems.innerHTML = cart.map((item, index) => `
+          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+            ${item.image && item.image.startsWith('http') 
+              ? `<div class="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
+                  <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'text-2xl flex items-center justify-center h-full\\'>���</span>'">
+                </div>`
+              : `<span class="text-3xl">${item.image || '🥬'}</span>`
+            }
+            <div class="flex-1">
+              <h4 class="font-medium text-gray-800 text-sm">${item.name}</h4>
+              <p class="text-emerald-600 font-bold">₹${item.price}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="updateCartQuantity(${index}, -1)" class="w-8 h-8 bg-gray-200 rounded-lg font-bold hover:bg-gray-300 transition">-</button>
+              <span class="w-8 text-center font-medium">${item.quantity}</span>
+              <button onclick="updateCartQuantity(${index}, 1)" class="w-8 h-8 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 transition">+</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function updateCartQuantity(index, delta) {
+      cart[index].quantity += delta;
+      if (cart[index].quantity <= 0) cart.splice(index, 1);
+      updateCartUI();
+    }
+
+    function renderFarmerProducts() {
+      const list = document.getElementById('farmer-products-list');
+      const noProducts = document.getElementById('farmer-no-products');
+      
+      const farmerProducts = products.filter(p => p.farmer_id === currentUser?.id);
+      
+      // Update stats
+      const totalProducts = farmerProducts.length;
+      const approved = farmerProducts.filter(p => p.status === 'approved').length;
+      const pending = farmerProducts.filter(p => p.status === 'pending').length;
+      const earnings = farmerProducts.filter(p => p.status === 'approved').reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0) * 5; // Estimated earnings
+      
+      document.getElementById('farmer-stat-products').textContent = totalProducts;
+      document.getElementById('farmer-stat-approved').textContent = approved;
+      document.getElementById('farmer-stat-pending').textContent = pending;
+      document.getElementById('farmer-stat-earnings').textContent = `₹${earnings.toLocaleString()}`;
+      
+      if (farmerProducts.length === 0) {
+        list.classList.add('hidden');
+        noProducts.classList.remove('hidden');
+        return;
+      }
+      
+      list.classList.remove('hidden');
+      noProducts.classList.add('hidden');
+      
+      list.innerHTML = farmerProducts.map(p => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
+          <div class="flex items-center gap-3">
+            ${p.image && p.image.startsWith('http') 
+              ? `<div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
+                  <img src="${p.image}" alt="${p.product_name}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'text-2xl flex items-center justify-center h-full\\'>🥬</span>'">
+                </div>`
+              : `<span class="text-3xl">${p.image || '🥬'}</span>`
+            }
+            <div>
+              <h4 class="font-medium text-gray-800">${p.product_name}</h4>
+              <p class="text-sm text-gray-500">${p.quantity} • ₹${p.price}</p>
+              <p class="text-xs text-gray-400">${p.category}</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-medium ${p.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : p.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}">
+            ${(p.status || 'pending').toUpperCase()}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function renderDeliveryOrders() {
+      const list = document.getElementById('delivery-orders-list');
+      const noOrders = document.getElementById('delivery-no-orders');
+      
+      // Show orders assigned to this delivery partner (check both id and visually log for debugging)
+      console.log('Current User:', currentUser);
+      console.log('All Orders:', orders);
+      
+      // Match by delivery_partner field - check multiple possible matches
+      const myOrders = orders.filter(o => {
+        const partnerId = o.delivery_partner;
+        const userId = currentUser?.id;
+        const userEmail = currentUser?.email;
+        // Match by ID or email
+        return partnerId === userId || partnerId === userEmail || 
+               (partnerId && userId && partnerId.toString() === userId.toString());
+      });
+      
+      console.log('My Orders:', myOrders);
+      
+      // Update stats
+      const assigned = myOrders.filter(o => o.status === 'assigned').length;
+      const pickedUp = myOrders.filter(o => o.status === 'picked_up').length;
+      const delivered = myOrders.filter(o => o.status === 'delivered').length;
+      const earnings = myOrders.filter(o => o.status === 'delivered').reduce((sum, o) => sum + (parseFloat(o.total) * 0.1), 0); // 10% commission
+      
+      document.getElementById('delivery-stat-assigned').textContent = assigned;
+      document.getElementById('delivery-stat-picked').textContent = pickedUp;
+      document.getElementById('delivery-stat-delivered').textContent = delivered;
+      document.getElementById('delivery-stat-earnings').textContent = `₹${Math.round(earnings)}`;
+      
+      if (myOrders.length === 0) {
+        list.classList.add('hidden');
+        noOrders.classList.remove('hidden');
+        return;
+      }
+      
+      list.classList.remove('hidden');
+      noOrders.classList.add('hidden');
+      
+      list.innerHTML = myOrders.map(o => `
+        <div class="p-4 bg-gray-50 rounded-xl border-2 ${o.status === 'delivered' ? 'border-emerald-200' : o.status === 'picked_up' ? 'border-blue-200' : 'border-amber-200'}">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h4 class="font-bold text-gray-800">${o.order_id}</h4>
+              <p class="text-sm text-gray-500">${o.customer_name}</p>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-medium ${o.status === 'delivered' ? 'bg-emerald-100 text-emerald-700' : o.status === 'picked_up' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}">
+              ${(o.status || 'pending').toUpperCase().replace('_', ' ')}
+            </span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mb-3">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-3 rounded-xl">
+              <p class="text-xs opacity-80">🎫 Delivery ID</p>
+              <p class="text-lg font-mono font-bold">${o.delivery_id}</p>
+            </div>
+            ${o.assignment_id ? `
+            <div class="bg-gradient-to-r from-purple-500 to-pink-600 text-white p-3 rounded-xl">
+              <p class="text-xs opacity-80">📋 Assignment ID</p>
+              <p class="text-lg font-mono font-bold">${o.assignment_id}</p>
+            </div>
+            ` : '<div></div>'}
+          </div>
+          <p class="text-sm text-gray-600 mb-1">📍 ${o.address}</p>
+          <p class="text-sm text-gray-600 mb-1">📞 ${o.phone}</p>
+          ${o.landmark ? `<p class="text-sm text-gray-600 mb-1">🏠 ${o.landmark}</p>` : ''}
+          <div class="flex items-center justify-between mt-3 pt-3 border-t">
+            <span class="font-bold text-emerald-600 text-lg">₹${o.total}</span>
+            ${o.status === 'assigned' ? `
+              <button onclick="updateOrderStatus('${o.id}', 'picked_up')" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-2">
+                📦 Mark as Picked Up
+              </button>
+            ` : o.status === 'picked_up' ? `
+              <button onclick="updateOrderStatus('${o.id}', 'delivered')" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition flex items-center gap-2">
+                ✅ Mark as Delivered
+              </button>
+            ` : '<span class="text-emerald-600 font-medium flex items-center gap-1">✅ Delivered</span>'}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderDarkstoreOrders() {
+      const list = document.getElementById('darkstore-orders-list');
+      const noOrders = document.getElementById('darkstore-no-orders');
+      
+      // Update stats
+      const totalOrders = orders.length;
+      const pending = orders.filter(o => o.status !== 'delivered').length;
+      const completed = orders.filter(o => o.status === 'delivered').length;
+      const revenue = orders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+      
+      document.getElementById('darkstore-stat-total').textContent = totalOrders;
+      document.getElementById('darkstore-stat-pending').textContent = pending;
+      document.getElementById('darkstore-stat-completed').textContent = completed;
+      document.getElementById('darkstore-stat-revenue').textContent = `₹${revenue.toLocaleString()}`;
+      
+      if (orders.length === 0) {
+        list.classList.add('hidden');
+        noOrders.classList.remove('hidden');
+        return;
+      }
+      
+      list.classList.remove('hidden');
+      noOrders.classList.add('hidden');
+      
+      list.innerHTML = orders.map(o => {
+        const assignedPartner = users.find(u => u.id === o.delivery_partner);
+        return `
+        <div class="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h4 class="font-bold text-gray-800">${o.order_id}</h4>
+              <p class="text-xs text-blue-600 font-mono">🎫 ${o.delivery_id}</p>
+              ${o.assignment_id ? `<p class="text-xs text-purple-600 font-mono">�� ${o.assignment_id}</p>` : ''}
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-medium ${o.status === 'delivered' ? 'bg-emerald-100 text-emerald-700' : o.status === 'picked_up' ? 'bg-blue-100 text-blue-700' : o.status === 'assigned' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'}">
+              ${(o.status || 'pending').toUpperCase().replace('_', ' ')}
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-gray-600">💰 ₹${o.total} • 👤 ${o.customer_name}</p>
+            ${assignedPartner ? `<p class="text-xs text-purple-600">🚴 ${assignedPartner.name}</p>` : ''}
+          </div>
+        </div>
+      `}).join('');
+    }
+
+    async function updateOrderStatus(orderId, status) {
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        order.status = status;
+        order.tracking = status === 'delivered' ? '✅ Order delivered' : order.tracking;
+        await updateRecord('Orders', order);
+        showToast('Order updated! ⚡');
+        renderDeliveryOrders();
+      }
+    }
+
+    // ============================================
+    // EVENT HANDLERS
+    // ============================================
+    
+    function setupEventListeners() {
+      // Cart
+      document.getElementById('cart-btn').addEventListener('click', () => document.getElementById('cart-sidebar').classList.remove('hidden'));
+      document.getElementById('close-cart').addEventListener('click', () => document.getElementById('cart-sidebar').classList.add('hidden'));
+      document.getElementById('cart-overlay').addEventListener('click', () => document.getElementById('cart-sidebar').classList.add('hidden'));
+      
+      // Search
+      document.getElementById('search-input').addEventListener('input', renderProducts);
+      
+      // Refresh
+      document.getElementById('refresh-btn').addEventListener('click', refreshProducts);
+      
+      // Categories
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('bg-emerald-100'));
+          btn.classList.add('bg-emerald-100');
+          renderProducts();
+        });
+      });
+      
+      // Login buttons
+      document.getElementById('sell-product-btn').addEventListener('click', () => { selectedUserType = 'farmer'; showLoginModal('Farmer', '🌾'); });
+      document.getElementById('delivery-login-btn').addEventListener('click', () => { selectedUserType = 'delivery'; showLoginModal('Delivery Partner', '🚴'); });
+      document.getElementById('darkstore-login-btn').addEventListener('click', () => { selectedUserType = 'darkstore'; showLoginModal('Dark Store', '🏪'); });
+      document.getElementById('login-btn').addEventListener('click', () => { selectedUserType = 'customer'; showLoginModal('Customer', '���'); });
+      
+      document.getElementById('login-overlay').addEventListener('click', hideLoginModal);
+      document.getElementById('back-to-home').addEventListener('click', hideLoginModal);
+      
+      document.getElementById('register-toggle').addEventListener('click', () => {
+        document.getElementById('login-form').classList.add('hidden');
+        document.getElementById('register-form').classList.remove('hidden');
+        document.getElementById('register-user-type').textContent = `Register as ${selectedUserType}`;
+      });
+      
+      document.getElementById('login-toggle').addEventListener('click', () => {
+        document.getElementById('register-form').classList.add('hidden');
+        document.getElementById('login-form').classList.remove('hidden');
+      });
+      
+      // Login form
+      document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('login-submit-btn');
+        btn.disabled = true;
+        btn.textContent = 'Logging in...';
+        
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        
+        // Admin check
+        if (email === 'admin' && password === 'admin123') {
+          currentUser = { id: 'ADMIN', user_type: 'admin', name: 'Admin' };
+          hideLoginModal();
+          setTimeout(() => {
+            showAdminDashboard();
+          }, 100);
+          showToast('Welcome Admin! ⚡');
+          btn.disabled = false;
+          btn.textContent = 'Login';
+          return;
+        }
+        
+        // Check users from Google Sheets
+        const user = users.find(u => 
+          u.email === email && u.password === password && u.user_type === selectedUserType
+        );
+        
+        if (user) {
+          currentUser = user;
+          hideLoginModal();
+          setTimeout(() => {
+            showDashboard(selectedUserType);
+          }, 100);
+          showToast(`Welcome ${user.name}! ⚡`);
+        } else {
+          // For demo: auto-create user if not found
+          const demoUser = {
+            id: generateId('USR'),
+            user_type: selectedUserType,
+            name: email.split('@')[0] || email,
+            email: email,
+            password: password
+          };
+          currentUser = demoUser;
+          hideLoginModal();
+          setTimeout(() => {
+            showDashboard(selectedUserType);
+          }, 100);
+          showToast(`Demo login as ${selectedUserType}! ⚡`);
+        }
+        
+        btn.disabled = false;
+        btn.textContent = 'Login';
+      });
+      
+      // Register form
+      document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('register-submit-btn');
+        btn.disabled = true;
+        btn.textContent = 'Registering...';
+        
+        const userData = {
+          id: generateId('USR'),
+          user_type: selectedUserType,
+          name: document.getElementById('register-name').value,
+          email: document.getElementById('register-email').value,
+          phone: document.getElementById('register-phone').value,
+          password: document.getElementById('register-password').value,
+          created_at: new Date().toISOString()
+        };
+        
+        await createRecord('Users', userData);
+        showToast('Registration successful! Please login ⚡');
+        
+        document.getElementById('register-form').classList.add('hidden');
+        document.getElementById('login-form').classList.remove('hidden');
+        document.getElementById('register-form').reset();
+        
+        btn.disabled = false;
+        btn.textContent = 'Register';
+        
+        // Refresh users
+        users = await fetchFromSheet('Users');
+      });
+      
+      // Checkout
+      document.getElementById('checkout-btn').addEventListener('click', () => {
+        if (cart.length === 0) {
+          showToast('Cart is empty', 'warning');
+          return;
+        }
+        document.getElementById('cart-sidebar').classList.add('hidden');
+        document.getElementById('address-modal').classList.remove('hidden');
+      });
+      
+      // Initialize payment modal when opened
+      function initPaymentModal() {
+        // Default to UPI selected
+        selectPaymentMethod('upi');
+        // Update payment total
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        document.getElementById('payment-total').textContent = `₹${total}`;
+      }
+      
+      // Address form
+      document.getElementById('address-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        currentOrderAddress = {
+          name: document.getElementById('customer-name').value,
+          phone: document.getElementById('customer-phone').value,
+          address: document.getElementById('customer-address').value,
+          landmark: document.getElementById('customer-landmark').value
+        };
+        document.getElementById('address-modal').classList.add('hidden');
+        document.getElementById('payment-modal').classList.remove('hidden');
+        initPaymentModal();
+      });
+      
+      // Place order
+      document.getElementById('place-order-btn').addEventListener('click', async () => {
+        const btn = document.getElementById('place-order-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span> Placing order...';
+        
+        const orderId = generateId('ORD');
+        const deliveryId = generateId('DID');
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        // Do NOT auto-assign - admin will manually assign delivery partner
+        const orderData = {
+          id: orderId,
+          order_id: orderId,
+          delivery_id: deliveryId,
+          customer_name: currentOrderAddress.name,
+          phone: currentOrderAddress.phone,
+          address: currentOrderAddress.address,
+          landmark: currentOrderAddress.landmark,
+          items: JSON.stringify(cart),
+          total: total,
+          status: 'pending',
+          delivery_partner: '',
+          assignment_id: '',
+          tracking: 'Order placed - Awaiting assignment',
+          created_at: new Date().toISOString()
+        };
+        
+        await createRecord('Orders', orderData);
+        
+        document.getElementById('payment-modal').classList.add('hidden');
+        document.getElementById('success-modal').classList.remove('hidden');
+        document.getElementById('success-order-id').textContent = orderId;
+        document.getElementById('success-delivery-id').textContent = deliveryId;
+        
+        cart = [];
+        updateCartUI();
+        utrInput.value = '';
+        showToast('Order placed successfully! ���');
+        
+        btn.disabled = false;
+        btn.innerHTML = '<span id="place-order-text">Place Order</span><span>⚡</span>';
+        
+        // Refresh orders
+        orders = await fetchFromSheet('Orders');
+      });
+      
+      document.getElementById('close-success').addEventListener('click', () => {
+        document.getElementById('success-modal').classList.add('hidden');
+      });
+      
+      // Add product form (Farmer)
+      document.getElementById('add-product-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('add-product-btn');
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+        
+        const productData = {
+          id: generateId('PRD'),
+          product_name: document.getElementById('product-name').value,
+          price: parseFloat(document.getElementById('product-price').value),
+          original_price: '',
+          category: document.getElementById('product-category').value,
+          quantity: document.getElementById('product-quantity').value,
+          image: document.getElementById('product-image-data').value || '🥬',
+          delivery_time: document.getElementById('product-delivery-time').value,
+          description: document.getElementById('product-description').value,
+          status: 'approved',
+          farmer_id: currentUser?.id || 'STORE',
+          farmer_name: currentUser?.name || 'Store',
+          created_at: new Date().toISOString()
+        };
+        
+        await createRecord('Products', productData);
+        showToast('Product added to Google Sheets! ⚡');
+        
+        e.target.reset();
+        document.getElementById('product-image-data').value = '';
+        document.getElementById('farmer-image-preview').classList.add('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Add Product to Google Sheets';
+        
+        // Refresh products
+        products = await fetchFromSheet('Products');
+        products = products.filter(p => p.product_name && p.status === 'approved');
+        renderProducts();
+        renderFarmerProducts();
+      });
+      
+      // Verify delivery ID (Dark Store)
+      document.getElementById('verify-delivery-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const deliveryId = document.getElementById('verify-delivery-id').value.toUpperCase();
+        const order = orders.find(o => o.delivery_id === deliveryId);
+        
+        const detailsEl = document.getElementById('verified-order-details');
+        
+        if (order) {
+          detailsEl.classList.remove('hidden');
+          detailsEl.innerHTML = `
+            <div class="text-center mb-4">
+              <span class="text-4xl">✅</span>
+              <h3 class="font-bold text-emerald-700 text-lg mt-2">Verified!</h3>
+            </div>
+            <div class="space-y-2 text-sm">
+              <p><strong>Order ID:</strong> ${order.order_id}</p>
+              <p><strong>Customer:</strong> ${order.customer_name}</p>
+              <p><strong>Phone:</strong> ${order.phone}</p>
+              <p><strong>Address:</strong> ${order.address}</p>
+              <p><strong>Total:</strong> ₹${order.total}</p>
+              <p><strong>Status:</strong> ${order.status}</p>
+            </div>
+          `;
+        } else {
+          showToast('Delivery ID not found', 'error');
+          detailsEl.classList.add('hidden');
+        }
+      });
+      
+      // Logout buttons
+      document.getElementById('farmer-logout').addEventListener('click', logout);
+      document.getElementById('delivery-logout').addEventListener('click', logout);
+      document.getElementById('darkstore-logout').addEventListener('click', logout);
+      
+      // Refresh buttons for dashboards
+      document.getElementById('farmer-refresh').addEventListener('click', async () => {
+        products = await fetchFromSheet('Products');
+        products = products.filter(p => p.product_name);
+        renderFarmerProducts();
+        showToast('Refreshed! 🔄');
+      });
+      
+      document.getElementById('delivery-refresh').addEventListener('click', async () => {
+        showToast('Refreshing orders...', 'warning');
+        const freshOrders = await fetchFromSheet('Orders');
+        if (freshOrders && freshOrders.length > 0) {
+          orders = freshOrders;
+        }
+        renderDeliveryOrders();
+        showToast('Orders refreshed! 🔄');
+      });
+      
+      document.getElementById('darkstore-refresh').addEventListener('click', async () => {
+        orders = await fetchFromSheet('Orders');
+        renderDarkstoreOrders();
+        showToast('Refreshed! 🔄');
+      });
+    }
+
+    function showLoginModal(typeName, emoji) {
+      document.getElementById('login-modal').classList.remove('hidden');
+      document.getElementById('register-form').classList.add('hidden');
+      document.getElementById('login-form').classList.remove('hidden');
+      document.getElementById('login-user-type').innerHTML = `${emoji} Login as ${typeName}`;
+    }
+
+    function hideLoginModal() {
+      document.getElementById('login-modal').classList.add('hidden');
+      document.getElementById('login-email').value = '';
+      document.getElementById('login-password').value = '';
+    }
+
+    function showDashboard(type) {
+      // Hide all views first
+      const customerView = document.getElementById('customer-view');
+      const farmerDash = document.getElementById('farmer-dashboard');
+      const deliveryDash = document.getElementById('delivery-dashboard');
+      const darkstoreDash = document.getElementById('darkstore-dashboard');
+      const adminDash = document.getElementById('admin-dashboard');
+      
+      // Hide all with both class and style
+      customerView.classList.add('hidden');
+      customerView.style.display = 'none';
+      farmerDash.classList.add('hidden');
+      farmerDash.style.display = 'none';
+      deliveryDash.classList.add('hidden');
+      deliveryDash.style.display = 'none';
+      darkstoreDash.classList.add('hidden');
+      darkstoreDash.style.display = 'none';
+      adminDash.classList.add('hidden');
+      adminDash.style.display = 'none';
+      
+      // Show the appropriate dashboard
+      if (type === 'farmer') {
+        farmerDash.classList.remove('hidden');
+        farmerDash.style.display = 'block';
+        document.getElementById('farmer-name-display').textContent = currentUser?.name || 'Farmer';
+        renderFarmerProducts();
+      } else if (type === 'delivery') {
+        deliveryDash.classList.remove('hidden');
+        deliveryDash.style.display = 'block';
+        document.getElementById('delivery-name-display').textContent = currentUser?.name || 'Delivery Partner';
+        // Fetch fresh orders from Google Sheets and then render
+        (async () => {
+          showToast('Loading your orders...', 'warning');
+          const freshOrders = await fetchFromSheet('Orders');
+          if (freshOrders && freshOrders.length > 0) {
+            orders = freshOrders;
+          }
+          renderDeliveryOrders();
+        })();
+      } else if (type === 'darkstore') {
+        darkstoreDash.classList.remove('hidden');
+        darkstoreDash.style.display = 'block';
+        document.getElementById('darkstore-name-display').textContent = currentUser?.name || 'Dark Store';
+        renderDarkstoreOrders();
+      }
+      
+      console.log('Dashboard shown:', type);
+    }
+
+    function showCustomerView() {
+      const customerView = document.getElementById('customer-view');
+      const farmerDash = document.getElementById('farmer-dashboard');
+      const deliveryDash = document.getElementById('delivery-dashboard');
+      const darkstoreDash = document.getElementById('darkstore-dashboard');
+      const adminDash = document.getElementById('admin-dashboard');
+      
+      // Hide all dashboards
+      farmerDash.classList.add('hidden');
+      farmerDash.style.display = 'none';
+      deliveryDash.classList.add('hidden');
+      deliveryDash.style.display = 'none';
+      darkstoreDash.classList.add('hidden');
+      darkstoreDash.style.display = 'none';
+      adminDash.classList.add('hidden');
+      adminDash.style.display = 'none';
+      
+      // Show customer view
+      customerView.classList.remove('hidden');
+      customerView.style.display = 'block';
+      
+      currentUser = null;
+    }
+
+    function logout() {
+      currentUser = null;
+      showCustomerView();
+      showToast('Logged out');
+    }
+
+    // ============================================
+    // ADMIN DASHBOARD FUNCTIONS
+    // ============================================
+    
+    function showAdminDashboard() {
+      // Hide all views
+      document.getElementById('customer-view').classList.add('hidden');
+      document.getElementById('customer-view').style.display = 'none';
+      document.getElementById('farmer-dashboard').classList.add('hidden');
+      document.getElementById('farmer-dashboard').style.display = 'none';
+      document.getElementById('delivery-dashboard').classList.add('hidden');
+      document.getElementById('delivery-dashboard').style.display = 'none';
+      document.getElementById('darkstore-dashboard').classList.add('hidden');
+      document.getElementById('darkstore-dashboard').style.display = 'none';
+      
+      // Show admin dashboard
+      const adminDash = document.getElementById('admin-dashboard');
+      adminDash.classList.remove('hidden');
+      adminDash.style.display = 'block';
+      
+      // Render admin data
+      renderAdminDashboard();
+      setupAdminEventListeners();
+      
+      // Load site settings to form
+      loadSiteSettingsToForm();
+    }
+
+    function renderAdminDashboard() {
+      // Update stats
+      document.getElementById('stat-products').textContent = products.length;
+      document.getElementById('stat-orders').textContent = orders.length;
+      document.getElementById('stat-users').textContent = users.length;
+      
+      const totalRevenue = orders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+      document.getElementById('stat-revenue').textContent = `₹${totalRevenue.toLocaleString()}`;
+      
+      // Recent orders
+      const recentOrders = document.getElementById('admin-recent-orders');
+      const sortedOrders = [...orders].reverse().slice(0, 5);
+      recentOrders.innerHTML = sortedOrders.length === 0 
+        ? '<p class="text-gray-500 text-center py-4">No orders yet</p>'
+        : sortedOrders.map(o => `
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+            <div>
+              <p class="font-medium text-gray-800">${o.order_id}</p>
+              <p class="text-xs text-gray-500">${o.customer_name} • ₹${o.total}</p>
+            </div>
+            <span class="px-2 py-1 rounded-full text-xs font-medium ${o.status === 'delivered' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+              ${(o.status || 'pending').toUpperCase()}
+            </span>
+          </div>
+        `).join('');
+      
+      // Pending products
+      const pendingProducts = document.getElementById('admin-pending-products');
+      const pending = products.filter(p => p.status === 'pending');
+      pendingProducts.innerHTML = pending.length === 0
+        ? '<p class="text-gray-500 text-center py-4">No pending products</p>'
+        : pending.map(p => `
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+            <div class="flex items-center gap-3">
+              ${p.image && p.image.startsWith('http') 
+                ? `<div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
+                    <img src="${p.image}" alt="${p.product_name}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'text-xl flex items-center justify-center h-full\\'>🥬</span>'">
+                  </div>`
+                : `<span class="text-2xl">${p.image || '🥬'}</span>`
+              }
+              <div>
+                <p class="font-medium text-gray-800">${p.product_name}</p>
+                <p class="text-xs text-gray-500">by ${p.farmer_name || 'Unknown'}</p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="approveProduct('${p.id}')" class="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition">✓ Approve</button>
+              <button onclick="rejectProduct('${p.id}')" class="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition">✕ Reject</button>
+            </div>
+          </div>
+        `).join('');
+        
+      renderAdminProductsList();
+      renderAdminOrdersList();
+      renderAdminUsersList();
+    }
+
+    function renderAdminProductsList() {
+      const list = document.getElementById('admin-products-list');
+      const allProducts = [...products].reverse();
+      
+      list.innerHTML = allProducts.length === 0
+        ? '<p class="text-gray-500 text-center py-4">No products yet</p>'
+        : allProducts.map(p => `
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition cursor-pointer" onclick="openEditProductModal('${p.id}')">
+            <div class="flex items-center gap-3">
+              ${p.image && p.image.startsWith('http') 
+                ? `<div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
+                    <img src="${p.image}" alt="${p.product_name}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'text-2xl flex items-center justify-center h-full\\'>🥬</span>'">
+                  </div>`
+                : `<span class="text-3xl">${p.image || '🥬'}</span>`
+              }
+              <div>
+                <p class="font-medium text-gray-800">${p.product_name}</p>
+                <p class="text-xs text-gray-500">${p.category} • ₹${p.price} ${p.original_price ? `<span class="line-through">₹${p.original_price}</span>` : ''} • ${p.quantity}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-1 rounded-full text-xs font-medium ${p.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : p.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}">
+                ${(p.status || 'pending').toUpperCase()}
+              </span>
+              <button onclick="event.stopPropagation(); openEditProductModal('${p.id}')" class="px-2 py-1 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700">✏️ Edit</button>
+            </div>
+          </div>
+        `).join('');
+    }
+    
+    function openEditProductModal(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+      
+      editingProduct = product;
+      
+      document.getElementById('edit-product-id').value = product.id;
+      document.getElementById('edit-product-name').value = product.product_name || '';
+      document.getElementById('edit-product-price').value = product.price || '';
+      document.getElementById('edit-product-original-price').value = product.original_price || '';
+      document.getElementById('edit-product-category').value = product.category || 'vegetables';
+      document.getElementById('edit-product-quantity').value = product.quantity || '';
+      document.getElementById('edit-product-image').value = product.image || '';
+      document.getElementById('edit-product-delivery').value = product.delivery_time || '8 MINS';
+      document.getElementById('edit-product-description').value = product.description || '';
+      document.getElementById('edit-product-status').value = product.status || 'approved';
+      
+      // Show image preview
+      const previewImg = document.getElementById('edit-product-preview-img');
+      if (product.image && (product.image.startsWith('http') || product.image.startsWith('data:'))) {
+        previewImg.src = product.image;
+      } else {
+        // Show emoji or default
+        previewImg.src = '';
+        previewImg.alt = product.image || '🥬';
+      }
+      
+      // Store current image in hidden field
+      document.getElementById('edit-product-image').value = product.image || '';
+      
+      document.getElementById('edit-product-modal').classList.remove('hidden');
+    }
+    
+    function closeEditProductModal() {
+      document.getElementById('edit-product-modal').classList.add('hidden');
+      editingProduct = null;
+    }
+    
+    function saveProductEdit(e) {
+      e.preventDefault();
+      
+      if (!editingProduct) return;
+      
+      const productId = document.getElementById('edit-product-id').value;
+      const productIndex = products.findIndex(p => p.id === productId);
+      
+      if (productIndex === -1) return;
+      
+      // Update product in array
+      products[productIndex] = {
+        ...products[productIndex],
+        product_name: document.getElementById('edit-product-name').value,
+        price: parseFloat(document.getElementById('edit-product-price').value),
+        original_price: parseFloat(document.getElementById('edit-product-original-price').value) || '',
+        category: document.getElementById('edit-product-category').value,
+        quantity: document.getElementById('edit-product-quantity').value,
+        image: document.getElementById('edit-product-image').value || '🥬',
+        delivery_time: document.getElementById('edit-product-delivery').value,
+        description: document.getElementById('edit-product-description').value,
+        status: document.getElementById('edit-product-status').value
+      };
+      
+      // Also update in DEFAULT_PRODUCTS if it's a default product
+      const defaultIndex = DEFAULT_PRODUCTS.findIndex(p => p.id === productId);
+      if (defaultIndex !== -1) {
+        DEFAULT_PRODUCTS[defaultIndex] = { ...products[productIndex] };
+      }
+      
+      closeEditProductModal();
+      showToast('Product updated! ⚡');
+      renderAdminDashboard();
+      renderProducts();
+    }
+    
+    function deleteProduct() {
+      if (!editingProduct) return;
+      
+      const productId = editingProduct.id;
+      
+      // Remove from products array
+      products = products.filter(p => p.id !== productId);
+      
+      // Remove from DEFAULT_PRODUCTS if it's a default product
+      const defaultIndex = DEFAULT_PRODUCTS.findIndex(p => p.id === productId);
+      if (defaultIndex !== -1) {
+        DEFAULT_PRODUCTS.splice(defaultIndex, 1);
+      }
+      
+      closeEditProductModal();
+      showToast('Product deleted! 🗑️');
+      renderAdminDashboard();
+      renderProducts();
+    }
+
+    function renderAdminOrdersList() {
+      const list = document.getElementById('admin-orders-list');
+      const allOrders = [...orders].reverse();
+      
+      list.innerHTML = allOrders.length === 0
+        ? '<p class="text-gray-500 text-center py-4">No orders yet</p>'
+        : allOrders.map(o => {
+          const assignedPartner = users.find(u => u.id === o.delivery_partner);
+          const isUnassigned = !o.delivery_partner || o.delivery_partner === '';
+          const isPaymentPending = o.payment_status === 'pending_verification';
+          const isUpiPayment = o.payment_method === 'upi';
+          const isPaymentVerified = o.payment_status === 'verified';
+          
+          // Determine border color based on payment and order status
+          let borderClass = 'border-gray-200';
+          if (isPaymentPending) {
+            borderClass = 'border-amber-400';
+          } else if (o.status === 'delivered') {
+            borderClass = 'border-emerald-200';
+          } else if (isUnassigned) {
+            borderClass = 'border-red-200';
+          } else {
+            borderClass = 'border-blue-200';
+          }
+          
+          return `
+          <div class="p-4 bg-gray-50 rounded-xl border-2 ${borderClass}">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <p class="font-bold text-gray-800">${o.order_id}</p>
+                <p class="text-xs text-blue-600 font-mono">🎫 Delivery ID: ${o.delivery_id}</p>
+                ${o.assignment_id ? `<p class="text-xs text-purple-600 font-mono">📋 Assignment ID: ${o.assignment_id}</p>` : ''}
+              </div>
+              <div class="flex flex-col items-end gap-1">
+                <span class="px-3 py-1 rounded-full text-xs font-medium ${o.status === 'delivered' ? 'bg-emerald-100 text-emerald-700' : o.status === 'assigned' ? 'bg-blue-100 text-blue-700' : o.status === 'picked_up' ? 'bg-indigo-100 text-indigo-700' : o.status === 'payment_pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'}">
+                  ${(o.status || 'pending').toUpperCase().replace('_', ' ')}
+                </span>
+                ${isPaymentPending ? `<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 animate-pulse">💳 PAYMENT PENDING</span>` : ''}
+                ${isUnassigned && !isPaymentPending ? `<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 animate-pulse">⚠️ UNASSIGNED</span>` : ''}
+              </div>
+            </div>
+            
+            <!-- Payment Info Section -->
+            <div class="mb-3 p-3 rounded-lg ${isUpiPayment ? (isPaymentVerified ? 'bg-emerald-50 border border-emerald-200' : 'bg-amber-50 border border-amber-200') : 'bg-blue-50 border border-blue-200'}">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium ${isUpiPayment ? (isPaymentVerified ? 'text-emerald-700' : 'text-amber-700') : 'text-blue-700'}">
+                    ${isUpiPayment ? '📱 UPI Payment' : '💵 Cash on Delivery'}
+                  </p>
+                  ${isUpiPayment && o.utr_number ? `
+                    <p class="text-xs text-gray-600 mt-1">UTR: <span class="font-mono font-bold">${o.utr_number}</span></p>
+                  ` : ''}
+                </div>
+                <div class="flex items-center gap-2">
+                  ${isPaymentPending ? `
+                    <button onclick="verifyPayment('${o.id}')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition flex items-center gap-1 pulse-btn">
+                      ✅ Verify Payment
+                    </button>
+                    <button onclick="rejectPayment('${o.id}')" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition">
+                      ❌ Reject
+                    </button>
+                  ` : isPaymentVerified ? `
+                    <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">✅ VERIFIED</span>
+                  ` : isUpiPayment ? `
+                    <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">Pending</span>
+                  ` : `
+                    <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">COD</span>
+                  `}
+                </div>
+              </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-2 text-sm text-gray-600">
+              <p>👤 ${o.customer_name}</p>
+              <p>📞 ${o.phone}</p>
+              <p>📍 ${o.address}</p>
+              <p>💰 ₹${o.total}</p>
+            </div>
+            ${assignedPartner ? `
+              <div class="mt-2 p-2 bg-blue-50 rounded-lg">
+                <p class="text-sm text-blue-700">🚴 Assigned to: <strong>${assignedPartner.name}</strong> (${assignedPartner.email || ''})</p>
+              </div>
+            ` : isPaymentPending ? `
+              <div class="mt-2 p-2 bg-amber-50 rounded-lg border border-amber-200">
+                <p class="text-sm text-amber-700">⚠️ Verify payment before assigning delivery partner</p>
+              </div>
+            ` : `
+              <div class="mt-2 p-2 bg-red-50 rounded-lg border border-red-200">
+                <p class="text-sm text-red-700">⚠️ No delivery partner assigned yet</p>
+              </div>
+            `}
+            <div class="flex gap-2 mt-3 flex-wrap">
+              ${!isPaymentPending ? (isUnassigned ? `
+                <button onclick="openAssignOrderModal('${o.id}')" class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 transition pulse-btn flex items-center gap-2">
+                  🚴 Assign Delivery Partner
+                </button>
+              ` : `
+                <button onclick="openAssignOrderModal('${o.id}')" class="px-3 py-1 bg-purple-600 text-white rounded-lg text-xs font-medium hover:bg-purple-700 transition">🔄 Reassign Partner</button>
+              `) : ''}
+              ${o.status !== 'delivered' && !isPaymentPending ? `
+                <button onclick="adminUpdateOrderStatus('${o.id}', 'processing')" class="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition">Processing</button>
+                <button onclick="adminUpdateOrderStatus('${o.id}', 'delivered')" class="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition">Delivered</button>
+              ` : o.status === 'delivered' ? '<span class="text-emerald-600 font-medium text-sm flex items-center gap-1">✅ Order Completed</span>' : ''}
+            </div>
+          </div>
+        `}).join('');
+    }
+    
+    // Verify Payment Function
+    async function verifyPayment(orderId) {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+      
+      order.payment_status = 'verified';
+      order.status = 'pending';
+      order.tracking = 'Payment verified - Awaiting delivery assignment';
+      order.verified_at = new Date().toISOString();
+      
+      await updateRecord('Orders', order);
+      showToast('Payment verified! ✅ You can now assign a delivery partner');
+      renderAdminDashboard();
+    }
+    
+    // Reject Payment Function
+    async function rejectPayment(orderId) {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+      
+      order.payment_status = 'rejected';
+      order.status = 'payment_failed';
+      order.tracking = 'Payment verification failed - Please contact customer';
+      
+      await updateRecord('Orders', order);
+      showToast('Payment rejected ❌');
+      renderAdminDashboard();
+    }
+
+    function renderAdminUsersList() {
+      const list = document.getElementById('admin-users-list');
+      
+      list.innerHTML = users.length === 0
+        ? '<p class="text-gray-500 text-center py-4">No users yet</p>'
+        : users.map(u => `
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                <span class="text-lg">${u.user_type === 'farmer' ? '🌾' : u.user_type === 'delivery' ? '��' : u.user_type === 'darkstore' ? '🏪' : '👤'}</span>
+              </div>
+              <div>
+                <p class="font-medium text-gray-800">${u.name}</p>
+                <p class="text-xs text-gray-500">${u.email} • ${u.phone || 'No phone'}</p>
+              </div>
+            </div>
+            <span class="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-medium uppercase">${u.user_type}</span>
+          </div>
+        `).join('');
+    }
+
+    // ============================================
+    // ORDER ASSIGNMENT FUNCTIONS
+    // ============================================
+    
+    let assigningOrderId = null;
+    
+    function openAssignOrderModal(orderId) {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+      
+      assigningOrderId = orderId;
+      
+      // Populate order info
+      const orderInfo = document.getElementById('assign-order-info');
+      orderInfo.innerHTML = `
+        <p class="font-bold text-gray-800 mb-1">${order.order_id}</p>
+        <p class="text-sm text-gray-600">��� ${order.customer_name}</p>
+        <p class="text-sm text-gray-600">📍 ${order.address}</p>
+        <p class="text-sm text-emerald-600 font-bold">���${order.total}</p>
+      `;
+      
+      // Populate delivery partners dropdown
+      const select = document.getElementById('select-delivery-partner');
+      const deliveryPartners = users.filter(u => u.user_type === 'delivery');
+      select.innerHTML = '<option value="">-- Choose Partner --</option>' + 
+        deliveryPartners.map(p => `<option value="${p.id}">${p.name} (${p.email})</option>`).join('');
+      
+      // Generate new assignment ID
+      const newAssignmentId = generateId('ASN');
+      document.getElementById('new-assignment-id').textContent = newAssignmentId;
+      document.getElementById('assignment-id-preview').classList.remove('hidden');
+      
+      document.getElementById('assign-order-modal').classList.remove('hidden');
+    }
+    
+    function closeAssignOrderModal() {
+      document.getElementById('assign-order-modal').classList.add('hidden');
+      assigningOrderId = null;
+    }
+    
+    async function confirmAssignOrder() {
+      const partnerId = document.getElementById('select-delivery-partner').value;
+      if (!partnerId) {
+        showToast('Please select a delivery partner', 'warning');
+        return;
+      }
+      
+      const order = orders.find(o => o.id === assigningOrderId);
+      if (!order) return;
+      
+      const assignmentId = document.getElementById('new-assignment-id').textContent;
+      
+      // Update order with assignment
+      order.delivery_partner = partnerId;
+      order.assignment_id = assignmentId;
+      order.status = 'assigned';
+      order.assigned_at = new Date().toISOString();
+      
+      await updateRecord('Orders', order);
+      
+      const partner = users.find(u => u.id === partnerId);
+      showToast(`Order assigned to ${partner?.name || 'partner'}! 🚴`);
+      
+      closeAssignOrderModal();
+      renderAdminDashboard();
+    }
+
+    async function approveProduct(productId) {
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        product.status = 'approved';
+        await updateRecord('Products', product);
+        showToast('Product approved! ⚡');
+        renderAdminDashboard();
+        renderProducts();
+      }
+    }
+
+    async function rejectProduct(productId) {
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        product.status = 'rejected';
+        await updateRecord('Products', product);
+        showToast('Product rejected');
+        renderAdminDashboard();
+      }
+    }
+
+    async function adminUpdateOrderStatus(orderId, status) {
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        order.status = status;
+        await updateRecord('Orders', order);
+        showToast('Order updated! ⚡');
+        renderAdminDashboard();
+      }
+    }
+
+    function setupAdminEventListeners() {
+      // Only setup once
+      if (window.adminListenersSet) return;
+      window.adminListenersSet = true;
+      
+      // Admin logout
+      document.getElementById('admin-logout').addEventListener('click', logout);
+      
+      // Hero settings form
+      document.getElementById('hero-settings-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        siteSettings.hero = {
+          title: document.getElementById('hero-title').value || siteSettings.hero.title,
+          subtitle: document.getElementById('hero-subtitle').value || siteSettings.hero.subtitle,
+          badge: document.getElementById('hero-badge').value || siteSettings.hero.badge,
+          tag: document.getElementById('hero-tag').value || siteSettings.hero.tag,
+          emoji: document.getElementById('hero-emoji').value || siteSettings.hero.emoji,
+          bgImage: document.getElementById('hero-bg-image-data').value || '',
+          gradientFrom: document.getElementById('hero-gradient-from').value || '#10b981',
+          gradientTo: document.getElementById('hero-gradient-to').value || '#14b8a6'
+        };
+        applyHeroSettings();
+        showToast('Hero banner updated! 🖼️');
+      });
+      
+      // About settings form
+      document.getElementById('about-settings-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        siteSettings.about = {
+          enabled: document.getElementById('about-enabled').checked,
+          title: document.getElementById('about-title').value || siteSettings.about.title,
+          description: document.getElementById('about-description').value || siteSettings.about.description,
+          image: document.getElementById('about-image-data').value || '',
+          missionTitle: document.getElementById('about-mission-title').value || siteSettings.about.missionTitle,
+          missionText: document.getElementById('about-mission-text').value || siteSettings.about.missionText,
+          visionTitle: document.getElementById('about-vision-title').value || siteSettings.about.visionTitle,
+          visionText: document.getElementById('about-vision-text').value || siteSettings.about.visionText
+        };
+        applyAboutSettings();
+        showToast('About section updated! 📝');
+      });
+      
+      // Live preview for hero settings
+      ['hero-title', 'hero-subtitle', 'hero-badge', 'hero-emoji'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateHeroPreview);
+      });
+      
+      // Sync color inputs
+      document.getElementById('hero-gradient-from').addEventListener('input', (e) => {
+        document.getElementById('hero-gradient-from-text').value = e.target.value;
+        updateHeroPreview();
+      });
+      document.getElementById('hero-gradient-from-text').addEventListener('input', (e) => {
+        if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+          document.getElementById('hero-gradient-from').value = e.target.value;
+          updateHeroPreview();
+        }
+      });
+      document.getElementById('hero-gradient-to').addEventListener('input', (e) => {
+        document.getElementById('hero-gradient-to-text').value = e.target.value;
+        updateHeroPreview();
+      });
+      document.getElementById('hero-gradient-to-text').addEventListener('input', (e) => {
+        if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+          document.getElementById('hero-gradient-to').value = e.target.value;
+          updateHeroPreview();
+        }
+      });
+      
+      // Admin tabs
+      document.querySelectorAll('.admin-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.admin-tab').forEach(t => {
+            t.classList.remove('bg-emerald-600', 'text-white');
+            t.classList.add('hover:bg-gray-200', 'text-gray-600');
+          });
+          tab.classList.add('bg-emerald-600', 'text-white');
+          tab.classList.remove('hover:bg-gray-200', 'text-gray-600');
+          
+          document.querySelectorAll('.admin-panel').forEach(p => p.classList.add('hidden'));
+          document.getElementById(`admin-${tab.dataset.tab}`).classList.remove('hidden');
+        });
+      });
+      
+      // Edit product form
+      document.getElementById('edit-product-form').addEventListener('submit', saveProductEdit);
+      
+      // Admin add product form
+      document.getElementById('admin-add-product-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const productData = {
+          id: generateId('PRD'),
+          product_name: document.getElementById('admin-product-name').value,
+          price: parseFloat(document.getElementById('admin-product-price').value),
+          category: document.getElementById('admin-product-category').value,
+          quantity: document.getElementById('admin-product-quantity').value,
+          image: document.getElementById('admin-product-image-data').value || '🥬',
+          delivery_time: document.getElementById('admin-product-delivery').value,
+          status: 'approved',
+          farmer_id: 'ADMIN',
+          farmer_name: 'Admin',
+          created_at: new Date().toISOString()
+        };
+        
+        await createRecord('Products', productData);
+        products.push(productData);
+        showToast('Product added! ⚡');
+        e.target.reset();
+        document.getElementById('admin-product-image-data').value = '';
+        document.getElementById('admin-image-preview').classList.add('hidden');
+        renderAdminDashboard();
+        renderProducts();
+      });
+      
+      // Refresh buttons
+      document.getElementById('admin-refresh-products').addEventListener('click', async () => {
+        products = await fetchFromSheet('Products');
+        renderAdminDashboard();
+        showToast('Products refreshed!');
+      });
+      
+      document.getElementById('admin-refresh-orders').addEventListener('click', async () => {
+        orders = await fetchFromSheet('Orders');
+        renderAdminDashboard();
+        showToast('Orders refreshed!');
+      });
+      
+      document.getElementById('admin-refresh-users').addEventListener('click', async () => {
+        users = await fetchFromSheet('Users');
+        renderAdminDashboard();
+        showToast('Users refreshed!');
+      });
+    }
+
+    // ============================================
+    // ELEMENT SDK INITIALIZATION
+    // ============================================
+    
+    const elementHandler = {
+      defaultConfig,
+      async onConfigChange(config) {
+        const title = config.site_title || defaultConfig.site_title;
+        const heroText = config.hero_text || defaultConfig.hero_text;
+        document.title = title;
+        const siteTitleEl = document.getElementById('site-title');
+        if (siteTitleEl) siteTitleEl.textContent = title;
+        const heroEl = document.getElementById('hero-text');
+        if (heroEl) heroEl.textContent = heroText;
+      },
+      mapToCapabilities(config) {
+        return {
+          recolorables: [],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        };
+      },
+      mapToEditPanelValues(config) {
+        return new Map([
+          ['site_title', config.site_title || defaultConfig.site_title],
+          ['hero_text', config.hero_text || defaultConfig.hero_text]
+        ]);
+      }
+    };
+
+    // ============================================
+    // APP INITIALIZATION
+    // ============================================
+    
+    async function init() {
+      // Initialize Element SDK
+      if (window.elementSdk) {
+        window.elementSdk.init(elementHandler);
+      }
+      
+      // Load data from Google Sheets
+      const success = await loadAllData();
+      
+      if (!success || products.length === 0) {
+        // Try fetching just products
+        products = await fetchFromSheet('Products');
+        products = products.filter(p => p.product_name);
+      }
+      
+      // Setup event listeners
+      setupEventListeners();
+      
+      // Render products
+      renderProducts();
+      
+      // Hide loading, show app
+      setTimeout(() => {
+        document.getElementById('loading-screen').classList.add('hidden');
+        document.getElementById('customer-view').classList.remove('hidden');
+      }, 500);
+    }
+
+    // Start the app
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b4f8ab6f7c947d5',t:'MTc2NjkwOTAxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
