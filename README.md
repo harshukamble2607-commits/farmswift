@@ -33,7 +33,8 @@ Admin reviews and assigns a delivery partner
 Delivery partner updates delivery status
 Order is marked as delivered
 This creates a transparent and trackable supply chain.
-🛠️ Tech Stack
+
+ Tech Stack
 Layer
 Technology
 Frontend
