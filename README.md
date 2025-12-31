@@ -25,6 +25,7 @@ The entire workflow is managed using lightweight, no-code tools, making it affor
 2. Customer – Browse and place orders
 3. Delivery Partner – View and deliver assigned orders
 4. Admin – Manage users, orders, and delivery assignments (Log in With defult credentials)
+5. Dark storage partner-verify delivery orders ,maintain stock,collect farmers product
 
  End-to-End Workflow
 Customer places an order
